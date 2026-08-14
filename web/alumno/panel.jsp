@@ -1,8 +1,4 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="modelo.Usuario"%>
-<%
-    Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
-%>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -14,18 +10,16 @@
         <link rel="stylesheet" href="../estilo/styles.css">
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-formal">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="SPanel"><i class="bi bi-mortarboard me-2"></i>Control Escolar</a>
-                <a class="nav-link" href="../SLogout"><i class="bi bi-box-arrow-right me-1"></i>Salir</a>
-            </div>
-        </nav>
+        <%@ include file="menu_alumno.jsp" %>
 
         <div class="container">
             <div class="contenedor-centrado text-center" style="max-width: 600px;">
                 <i class="bi bi-mortarboard" style="font-size: 2.4rem; color: var(--color-primary);"></i>
                 <h2 class="mt-3">Hola, <%= usuarioSesion.getNombres()%></h2>
-                <p class="texto-info">Tu módulo de materias y calificaciones se construye en la siguiente fase del proyecto.</p>
+                <p class="texto-info">Consulta tus calificaciones por cuatrimestre en la sección "Mis calificaciones".</p>
+                <a href="SCalificaciones" class="btn btn-primary-formal mt-2">
+                    <i class="bi bi-journal-check me-1"></i>Ver mis calificaciones
+                </a>
             </div>
         </div>
 

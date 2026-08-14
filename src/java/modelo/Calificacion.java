@@ -3,11 +3,25 @@ package modelo;
 public class Calificacion
 {
     private int idCalificacion;
-    private int idInscripcion;
+    private int idInscripcionMateria;
     private Double parcial1;
     private Double parcial2;
     private Double parcial3;
     private Double promedioFinal;
+
+    // Campos de solo lectura (vienen del JOIN) para mostrar la lista de
+    // alumnos a capturar sin tener que hacer consultas aparte.
+    private String matricula;
+    private String nombreAlumno;
+    private String estadoMateria;
+    private int intento;
+
+    // Campos de solo lectura adicionales (vienen del JOIN) para la boleta
+    // de calificaciones que ve el propio alumno, agrupada por cuatrimestre.
+    private String nombreMateria;
+    private int numeroCuatrimestre;
+    private String nombrePeriodo;
+    private String nombreGrupo;
 
     public int getIdCalificacion()
     {
@@ -19,14 +33,14 @@ public class Calificacion
         this.idCalificacion = idCalificacion;
     }
 
-    public int getIdInscripcion()
+    public int getIdInscripcionMateria()
     {
-        return idInscripcion;
+        return idInscripcionMateria;
     }
 
-    public void setIdInscripcion(int idInscripcion)
+    public void setIdInscripcionMateria(int idInscripcionMateria)
     {
-        this.idInscripcion = idInscripcion;
+        this.idInscripcionMateria = idInscripcionMateria;
     }
 
     public Double getParcial1()
@@ -67,5 +81,104 @@ public class Calificacion
     public void setPromedioFinal(Double promedioFinal)
     {
         this.promedioFinal = promedioFinal;
+    }
+
+    public String getMatricula()
+    {
+        return matricula;
+    }
+
+    public void setMatricula(String matricula)
+    {
+        this.matricula = matricula;
+    }
+
+    public String getNombreAlumno()
+    {
+        return nombreAlumno;
+    }
+
+    public void setNombreAlumno(String nombreAlumno)
+    {
+        this.nombreAlumno = nombreAlumno;
+    }
+
+    public String getEstadoMateria()
+    {
+        return estadoMateria;
+    }
+
+    public void setEstadoMateria(String estadoMateria)
+    {
+        this.estadoMateria = estadoMateria;
+    }
+
+    public int getIntento()
+    {
+        return intento;
+    }
+
+    public void setIntento(int intento)
+    {
+        this.intento = intento;
+    }
+
+    public String getNombreMateria()
+    {
+        return nombreMateria;
+    }
+
+    public void setNombreMateria(String nombreMateria)
+    {
+        this.nombreMateria = nombreMateria;
+    }
+
+    public int getNumeroCuatrimestre()
+    {
+        return numeroCuatrimestre;
+    }
+
+    public void setNumeroCuatrimestre(int numeroCuatrimestre)
+    {
+        this.numeroCuatrimestre = numeroCuatrimestre;
+    }
+
+    public String getNombrePeriodo()
+    {
+        return nombrePeriodo;
+    }
+
+    public void setNombrePeriodo(String nombrePeriodo)
+    {
+        this.nombrePeriodo = nombrePeriodo;
+    }
+
+    public String getNombreGrupo()
+    {
+        return nombreGrupo;
+    }
+
+    public void setNombreGrupo(String nombreGrupo)
+    {
+        this.nombreGrupo = nombreGrupo;
+    }
+
+    /**
+     * Devuelve el valor capturado del parcial indicado (1, 2 o 3), o null si
+     * ese número no es válido o aún no se ha capturado.
+     */
+    public Double getParcial(int numero)
+    {
+        switch (numero)
+        {
+            case 1:
+                return parcial1;
+            case 2:
+                return parcial2;
+            case 3:
+                return parcial3;
+            default:
+                return null;
+        }
     }
 }

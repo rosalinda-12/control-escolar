@@ -169,6 +169,28 @@ public class DAOUsuario
         }
     }
 
+    /**
+     * Borra el código de verificación/recuperación y su expiración sin
+     * tocar correo_verificado. Se usa al terminar un flujo de recuperación
+     * de contraseña, para que ese código de un solo uso no se pueda
+     * reutilizar.
+     */
+    public void limpiarCodigo(int idUsuario)
+    {
+        String sql = "UPDATE usuarios SET codigo_verificacion = NULL, expiracion_codigo = NULL WHERE id_usuario = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idUsuario);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     public void marcarCorreoVerificado(int idUsuario)
     {
         String sql = "UPDATE usuarios SET correo_verificado = TRUE, codigo_verificacion = NULL WHERE id_usuario = ?";

@@ -1,8 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="modelo.Usuario"%>
-<%
-    Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
-%>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -14,18 +11,17 @@
         <link rel="stylesheet" href="../estilo/styles.css">
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-formal">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="SPanel"><i class="bi bi-mortarboard me-2"></i>Control Escolar</a>
-                <a class="nav-link" href="../SLogout"><i class="bi bi-box-arrow-right me-1"></i>Salir</a>
-            </div>
-        </nav>
+        <%@ include file="menu_maestro.jsp" %>
 
         <div class="container">
             <div class="contenedor-centrado text-center" style="max-width: 600px;">
                 <i class="bi bi-person-badge" style="font-size: 2.4rem; color: var(--color-primary);"></i>
                 <h2 class="mt-3">Hola, <%= usuarioSesion.getNombres()%></h2>
-                <p class="texto-info">Tu módulo de grupos, materias y captura de calificaciones se construye en la siguiente fase del proyecto.</p>
+                <p class="texto-info">Desde aquí puedes ver los grupos y materias que tienes a tu cargo y capturar las
+                    calificaciones del parcial activo.</p>
+                <a href="SCalificaciones" class="btn btn-primary-formal mt-2">
+                    <i class="bi bi-journal-check me-1"></i>Ir a mis grupos y calificaciones
+                </a>
             </div>
         </div>
 

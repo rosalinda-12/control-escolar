@@ -42,6 +42,23 @@ public class DAOInscripcionMateria
         }
     }
 
+    public void actualizarEstado(int idInscripcionMateria, String estado)
+    {
+        String sql = "UPDATE inscripcion_materias SET estado = ? WHERE id_inscripcion_materia = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, estado);
+            sentencia.setInt(2, idInscripcionMateria);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     public int contarMaterias(int idInscripcion)
     {
         String sql = "SELECT COUNT(*) FROM inscripcion_materias WHERE id_inscripcion = ?";

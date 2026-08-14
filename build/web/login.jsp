@@ -19,6 +19,10 @@
                     <div class="mensaje-exito"><i class="bi bi-check-circle me-1"></i>Correo verificado. Ya puedes iniciar sesión.</div>
                     <% } %>
 
+                    <% if (request.getParameter("recuperada") != null) { %>
+                    <div class="mensaje-exito"><i class="bi bi-check-circle me-1"></i>Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva.</div>
+                    <% } %>
+
                     <% if (request.getAttribute("error") != null) { %>
                     <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
                     <% } %>
@@ -31,6 +35,9 @@
                         <div class="mb-3">
                             <label class="form-label">Contraseña</label>
                             <input type="password" name="tfContrasena" class="form-control" required>
+                        </div>
+                        <div class="mb-3 text-end">
+                            <a href="SOlvideContrasena" class="texto-info">¿Olvidaste tu contraseña?</a>
                         </div>
                         <button type="submit" class="btn btn-primary-formal w-100">Entrar</button>
                     </form>
