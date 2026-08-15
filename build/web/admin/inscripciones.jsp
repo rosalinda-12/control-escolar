@@ -8,6 +8,7 @@
     ArrayList<Grupo> grupos = (ArrayList<Grupo>) request.getAttribute("grupos");
     TrayectoriaAcademica trayectoriaEncontrada = (TrayectoriaAcademica) request.getAttribute("trayectoriaEncontrada");
     String matriculaBuscada = (String) request.getAttribute("matriculaBuscada");
+    boolean verTodas = request.getAttribute("verTodas") != null;
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -29,6 +30,9 @@
             <form method="get" action="SInscripciones" class="d-flex gap-2 mb-4" style="max-width: 420px;">
                 <input type="text" name="matricula" class="form-control" placeholder="Buscar por matrícula" value="<%= matriculaBuscada != null ? matriculaBuscada : ""%>" required>
                 <button type="submit" class="btn btn-primary-formal"><i class="bi bi-search"></i></button>
+                <% if (matriculaBuscada != null) { %>
+                <a href="SInscripciones" class="btn btn-outline-secondary text-nowrap">Limpiar</a>
+                <% } %>
             </form>
 
             <% if (request.getAttribute("error") != null) { %>
@@ -60,8 +64,30 @@
             <% } %>
 
             <% if (inscripciones.isEmpty()) { %>
-            <div class="mensaje-exito">No hay inscripciones registradas todavía.</div>
+            <div class="mensaje-exito">
+                <% if (matriculaBuscada != null) { %>
+                Esa matrícula todavía no tiene inscripciones registradas.
+                <% } else { %>
+                No hay inscripciones activas en este momento.
+                <% } %>
+            </div>
             <% } else { %>
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                <h6 class="texto-info mb-0">
+                    <% if (matriculaBuscada != null) { %>
+                    Historial de la matrícula <%= matriculaBuscada%>
+                    <% } else if (verTodas) { %>
+                    Historial completo (incluye bajas)
+                    <% } else { %>
+                    Inscripciones activas
+                    <% } %>
+                </h6>
+                <% if (matriculaBuscada == null) { %>
+                <a href="SInscripciones<%= verTodas ? "" : "?todas=1"%>" class="texto-info">
+                    <% if (verTodas) { %>Ver solo activas<% } else { %>Ver historial completo<% } %>
+                </a>
+                <% } %>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>

@@ -20,7 +20,24 @@ public class ServletInscripciones extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
-        solicitud.setAttribute("inscripciones", new ServicioInscripcion().listar());
+        ServicioInscripcion servicioInscripcion = new ServicioInscripcion();
+        String matricula = solicitud.getParameter("matricula");
+        boolean verTodas = "1".equals(solicitud.getParameter("todas"));
+
+        if (matricula != null && !matricula.isEmpty())
+        {
+            solicitud.setAttribute("inscripciones", servicioInscripcion.listarPorMatricula(matricula));
+        }
+        else if (verTodas)
+        {
+            solicitud.setAttribute("inscripciones", servicioInscripcion.listar());
+            solicitud.setAttribute("verTodas", true);
+        }
+        else
+        {
+            solicitud.setAttribute("inscripciones", servicioInscripcion.listarActivas());
+        }
+
         solicitud.setAttribute("grupos", new ServicioGrupo().listar());
 
         HttpSession sesion = solicitud.getSession(false);
@@ -30,7 +47,6 @@ public class ServletInscripciones extends HttpServlet
             sesion.removeAttribute("errorInscripcion");
         }
 
-        String matricula = solicitud.getParameter("matricula");
         if (matricula != null && !matricula.isEmpty())
         {
             TrayectoriaAcademica trayectoria = new ServicioTrayectoria().buscarPorMatricula(matricula);

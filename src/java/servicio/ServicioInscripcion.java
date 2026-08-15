@@ -27,6 +27,16 @@ public class ServicioInscripcion
         return daoInscripcion.listar();
     }
 
+    public ArrayList<modelo.Inscripcion> listarActivas()
+    {
+        return daoInscripcion.listarActivas();
+    }
+
+    public ArrayList<modelo.Inscripcion> listarPorMatricula(String matricula)
+    {
+        return daoInscripcion.listarPorMatricula(matricula);
+    }
+
     /**
      * Una inscripción nueva (o una reinscripción: es el mismo flujo, solo
      * cambia el grupo/periodo elegido para una trayectoria que ya existía)
@@ -53,6 +63,11 @@ public class ServicioInscripcion
         {
             return ResultadoSimple.fallo("Esa trayectoria ya está inscrita en ese grupo.");
         }
+
+        // Reinscripción: si la trayectoria ya tenía una inscripción activa en
+        // otro grupo/periodo, se cierra antes de crear la nueva para que solo
+        // quede una activa a la vez.
+        daoInscripcion.finalizarActivasDeTrayectoria(idTrayectoria);
 
         int idInscripcion = daoInscripcion.agregar(idTrayectoria, idGrupo, idPeriodo);
         daoInscripcionMateria.generarParaInscripcion(idInscripcion, idGrupo);

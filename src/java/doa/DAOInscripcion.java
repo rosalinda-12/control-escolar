@@ -47,6 +47,63 @@ public class DAOInscripcion
         return lista;
     }
 
+    /**
+     * Solo las inscripciones activas, para la vista por defecto: con muchos
+     * alumnos el historial completo (bajas de ciclos pasados, reinscripciones
+     * viejas, etc.) hace la tabla inmanejable.
+     */
+    public ArrayList<Inscripcion> listarActivas()
+    {
+        ArrayList<Inscripcion> lista = new ArrayList<>();
+        String sql = SELECCION_BASE + "WHERE i.estado = 'Activa' ORDER BY i.fecha_inscripcion DESC";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql);
+             ResultSet resultado = sentencia.executeQuery())
+        {
+            while (resultado.next())
+            {
+                lista.add(construir(resultado));
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
+
+    /**
+     * Historial completo (activas y bajas) de una sola matrícula, para cuando
+     * el admin busca a un alumno puntual.
+     */
+    public ArrayList<Inscripcion> listarPorMatricula(String matricula)
+    {
+        ArrayList<Inscripcion> lista = new ArrayList<>();
+        String sql = SELECCION_BASE + "WHERE t.matricula = ? ORDER BY i.fecha_inscripcion DESC";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, matricula);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next())
+                {
+                    lista.add(construir(resultado));
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
+
     public boolean existeParaTrayectoriaGrupo(int idTrayectoria, int idGrupo)
     {
         String sql = "SELECT COUNT(*) FROM inscripciones WHERE id_trayectoria = ? AND id_grupo = ?";
@@ -99,6 +156,27 @@ public class DAOInscripcion
         }
 
         return 0;
+    }
+
+    /**
+     * Cierra (pasa a 'Baja') cualquier inscripción que siga 'Activa' para esa
+     * trayectoria. Se usa al reinscribir: la trayectoria solo debe tener una
+     * inscripción activa a la vez, la más reciente.
+     */
+    public void finalizarActivasDeTrayectoria(int idTrayectoria)
+    {
+        String sql = "UPDATE inscripciones SET estado = 'Baja' WHERE id_trayectoria = ? AND estado = 'Activa'";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idTrayectoria);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
     }
 
     public void actualizarEstado(int idInscripcion, String estado)
