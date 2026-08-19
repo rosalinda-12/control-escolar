@@ -14,6 +14,7 @@ public class ServletRegistro extends HttpServlet
     private static final String ADMINISTRADOR = "Administrador";
     private static final String ALUMNO = "Alumno";
     private static final String MAESTRO = "Maestro";
+    private static final String SUBDIRECTOR = "Subdirector";
 
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
@@ -24,9 +25,9 @@ public class ServletRegistro extends HttpServlet
         String tipoSolicitado = solicitud.getParameter("tipo");
         String tipoSeleccionado = existeAdministrador ? ALUMNO : ADMINISTRADOR;
 
-        if (existeAdministrador && MAESTRO.equals(tipoSolicitado))
+        if (existeAdministrador && (MAESTRO.equals(tipoSolicitado) || SUBDIRECTOR.equals(tipoSolicitado)))
         {
-            tipoSeleccionado = MAESTRO;
+            tipoSeleccionado = tipoSolicitado;
         }
 
         solicitud.setAttribute("existeAdministrador", existeAdministrador);
@@ -64,6 +65,10 @@ public class ServletRegistro extends HttpServlet
         else if (MAESTRO.equals(tipo))
         {
             resultado = servicioRegistro.registrarMaestro(correo, contrasena);
+        }
+        else if (SUBDIRECTOR.equals(tipo))
+        {
+            resultado = servicioRegistro.registrarSubdirector(correo, contrasena);
         }
         else
         {

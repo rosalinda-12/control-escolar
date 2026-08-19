@@ -12,7 +12,8 @@ import java.util.ArrayList;
 public class DAOGrupo
 {
     private static final String SELECCION_BASE =
-            "SELECT g.id_grupo, g.id_plan_cuatrimestre, pc.numero_cuatrimestre, pc.id_plan, pe.nombre_plan, c.nombre_carrera, "
+            "SELECT g.id_grupo, g.id_plan_cuatrimestre, pc.numero_cuatrimestre, pc.id_plan, pe.nombre_plan, "
+            + "c.id_carrera, c.nombre_carrera, "
             + "g.nombre_grupo, g.id_generacion, ge.nombre_generacion, g.id_periodo, pr.nombre_periodo, g.estatus "
             + "FROM grupos g "
             + "JOIN plan_cuatrimestres pc ON g.id_plan_cuatrimestre = pc.id_plan_cuatrimestre "
@@ -66,6 +67,36 @@ public class DAOGrupo
         }
 
         return null;
+    }
+
+    /**
+     * Grupos de una sola carrera, para el panel del Subdirector (que solo
+     * puede consultar/operar dentro de la carrera que tiene asignada).
+     */
+    public ArrayList<Grupo> listarPorCarrera(int idCarrera)
+    {
+        ArrayList<Grupo> lista = new ArrayList<>();
+        String sql = SELECCION_BASE + "WHERE c.id_carrera = ? ORDER BY pr.fecha_inicio DESC, g.nombre_grupo";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idCarrera);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next())
+                {
+                    lista.add(construirGrupo(resultado));
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
     }
 
     public boolean existeNombreEnPeriodo(String nombreGrupo, int idPeriodo)
@@ -148,6 +179,7 @@ public class DAOGrupo
         grupo.setNumeroCuatrimestre(resultado.getInt("numero_cuatrimestre"));
         grupo.setIdPlan(resultado.getInt("id_plan"));
         grupo.setNombrePlan(resultado.getString("nombre_plan"));
+        grupo.setIdCarrera(resultado.getInt("id_carrera"));
         grupo.setNombreCarrera(resultado.getString("nombre_carrera"));
         grupo.setNombreGrupo(resultado.getString("nombre_grupo"));
         grupo.setIdGeneracion(resultado.getInt("id_generacion"));

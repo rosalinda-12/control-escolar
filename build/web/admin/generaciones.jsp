@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Generacion"%>
 <%@page import="java.util.ArrayList"%>
 <%
@@ -100,5 +100,8 @@
             new bootstrap.Modal(document.getElementById("modalGeneracion")).show();
         </script>
         <% } %>
+            </main>
+    </div>
+</div>
     </body>
 </html>

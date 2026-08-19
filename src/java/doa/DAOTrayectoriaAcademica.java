@@ -160,6 +160,52 @@ public class DAOTrayectoriaAcademica
         return 0;
     }
 
+    /**
+     * Regla de avance de nivel: cuenta cuántas materias activas del plan de
+     * la trayectoria dada (por ejemplo, todo el plan de TSU) le faltan por
+     * aprobar al alumno. Una materia cuenta como pendiente si nunca tiene un
+     * intento con estado 'Aprobada' en las inscripciones de esa trayectoria.
+     * Si el resultado es 0, el alumno terminó ese nivel/plan y puede pasar
+     * al siguiente (por ejemplo, de TSU a Ingeniería/Licenciatura).
+     */
+    public int contarMateriasPendientes(int idTrayectoria)
+    {
+        String sql =
+                "SELECT COUNT(*) FROM materias m "
+                + "JOIN plan_cuatrimestres pc ON m.id_plan_cuatrimestre = pc.id_plan_cuatrimestre "
+                + "WHERE pc.id_plan = (SELECT id_plan FROM trayectorias_academicas WHERE id_trayectoria = ?) "
+                + "AND m.estatus = 'Activa' "
+                + "AND NOT EXISTS ("
+                + "    SELECT 1 FROM inscripcion_materias im "
+                + "    JOIN grupo_materias gm ON im.id_grupo_materia = gm.id_grupo_materia "
+                + "    JOIN inscripciones i ON im.id_inscripcion = i.id_inscripcion "
+                + "    WHERE gm.id_materia = m.id_materia "
+                + "      AND i.id_trayectoria = ? "
+                + "      AND im.estado = 'Aprobada'"
+                + ")";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idTrayectoria);
+            sentencia.setInt(2, idTrayectoria);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                if (resultado.next())
+                {
+                    return resultado.getInt(1);
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return 0;
+    }
+
     public void actualizarEstado(int idTrayectoria, String estado, boolean cerrarFecha)
     {
         String sql = "UPDATE trayectorias_academicas SET estado = ?" + (cerrarFecha ? ", fecha_fin = CURDATE()" : "") + " WHERE id_trayectoria = ?";

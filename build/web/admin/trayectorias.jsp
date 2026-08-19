@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Alumno"%>
 <%@page import="modelo.TrayectoriaAcademica"%>
 <%@page import="modelo.PlanEstudio"%>
@@ -22,17 +22,31 @@
         <%@ include file="menu_admin.jspf" %>
 
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center mt-4">
+            <p class="mt-4 mb-1">
+                <a href="SAlumnos" class="btn btn-sm btn-outline-formal">
+                    <i class="bi bi-arrow-left me-1"></i>Regresar a alumnos
+                </a>
+            </p>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h2>Trayectoria de <%= alumno.getNombreCompleto()%></h2>
                     <p class="texto-info mb-0">Orden cronológico. Una trayectoria nueva no borra ni modifica las anteriores.</p>
                 </div>
-                <% if (!planes.isEmpty()) { %>
-                <button class="btn btn-primary-formal" data-bs-toggle="modal" data-bs-target="#modalTrayectoria">
-                    <i class="bi bi-plus-lg me-1"></i>Registrar cambio de carrera/plan
-                </button>
-                <% } %>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-formal" data-bs-toggle="modal" data-bs-target="#modalNuevaCarrera">
+                        <i class="bi bi-signpost-split me-1"></i>Agregar carrera
+                    </button>
+                    <% if (!planes.isEmpty()) { %>
+                    <button class="btn btn-primary-formal" data-bs-toggle="modal" data-bs-target="#modalTrayectoria">
+                        <i class="bi bi-plus-lg me-1"></i>Registrar cambio de carrera/plan
+                    </button>
+                    <% } %>
+                </div>
             </div>
+            <% if (planes.isEmpty()) { %>
+            <p class="texto-info mt-2">Todavía no hay ningún plan de estudios vigente. Usa "Agregar carrera" y luego da de alta su plan de estudios (con al menos un nivel académico) para poder registrar una trayectoria.</p>
+            <% } %>
 
             <% if (request.getAttribute("error") != null) { %>
             <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
@@ -138,7 +152,49 @@
             </div>
         </div>
 
+        <!-- Modal independiente para dar de alta una carrera nueva sin salir
+             de la Trayectoria del alumno. Es un modal aparte del de
+             "Registrar cambio de carrera/plan": solo crea la carrera (el
+             plan de estudios, con su nivel académico obligatorio, se sigue
+             dando de alta después en Académico > Planes de estudio). -->
+        <div class="modal fade modal-formal" id="modalNuevaCarrera" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" action="SCarreras">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Nueva carrera</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="accion" value="Agregar">
+                            <input type="hidden" name="retorno" value="STrayectorias?idAlumno=<%= alumno.getIdAlumno()%>">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre de la carrera</label>
+                                <input type="text" name="tfNombreCarrera" class="form-control" placeholder="Ingeniería en Desarrollo de Software" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Clave</label>
+                                <input type="text" name="tfClaveCarrera" class="form-control text-uppercase" placeholder="IDS" maxlength="20" required>
+                                <div class="form-text">Se usa como identificador corto, por ejemplo en matrículas y reportes.</div>
+                            </div>
+                            <div class="mensaje-exito mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Después de crearla, ve a Académico &gt; Planes de estudio para darle un plan con al menos un
+                                nivel académico: sin eso, todavía no podrás registrarla aquí en Trayectoria.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary-formal">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
+            </main>
+    </div>
+</div>
     </body>
 </html>

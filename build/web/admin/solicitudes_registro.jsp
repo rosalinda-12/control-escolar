@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Usuario"%>
 <%@page import="java.util.ArrayList"%>
 <%
@@ -47,11 +47,16 @@
                                 </span>
                             </td>
                             <td class="text-end">
+                                <% if (solicitante.isCorreoVerificado()) { %>
                                 <form method="post" action="SSolicitudesRegistro" class="d-inline">
                                     <input type="hidden" name="idUsuario" value="<%= solicitante.getIdUsuario()%>">
                                     <input type="hidden" name="accion" value="Aprobar">
                                     <button type="submit" class="btn btn-sm btn-primary-formal">Aprobar</button>
                                 </form>
+                                <% } else { %>
+                                <button type="button" class="btn btn-sm btn-primary-formal" disabled
+                                        title="Todavía no puede aprobarse: la persona no ha verificado su correo.">Aprobar</button>
+                                <% } %>
                                 <form method="post" action="SSolicitudesRegistro" class="d-inline">
                                     <input type="hidden" name="idUsuario" value="<%= solicitante.getIdUsuario()%>">
                                     <input type="hidden" name="accion" value="Rechazar">
@@ -68,5 +73,8 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
+            </main>
+    </div>
+</div>
     </body>
 </html>

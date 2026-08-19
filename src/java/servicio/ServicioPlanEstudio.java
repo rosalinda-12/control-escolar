@@ -1,11 +1,14 @@
 package servicio;
 
+import conexion.ConexionMySQL;
 import doa.DAOPlanCuatrimestre;
 import doa.DAOPlanEstudio;
 import doa.DAOPlanNivel;
 import modelo.PlanEstudio;
 import modelo.PlanNivel;
 import modelo.Usuario;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class ServicioPlanEstudio
@@ -48,6 +51,15 @@ public class ServicioPlanEstudio
      * Ingeniería 7-11) y genera automáticamente los N cuatrimestres según
      * la duración indicada, para que el admin no tenga que darlos de alta
      * uno por uno.
+     *
+     * "Niveles dentro del plan" es un paso obligatorio, no una sugerencia:
+     * el plan se crea en 'Borrador' y solo se marca 'Vigente' después de
+     * registrar al menos un nivel, todo dentro de la misma transacción. Si
+     * falta el nivel, o si algo falla a mitad de camino, no queda un plan
+     * a medias: se revierte todo. La base de datos refuerza esta misma
+     * regla con triggers (trg_planes_bloquear_vigente_directo y
+     * trg_planes_bloquear_vigente_sin_niveles), así que ni siquiera un
+     * script que hable directo con la BD puede saltársela.
      */
     public ResultadoSimple agregar(PlanEstudio plan, int[] idsNivel, int[] cuatrimestresInicio, int[] cuatrimestresFin, Usuario responsable)
     {
@@ -58,7 +70,7 @@ public class ServicioPlanEstudio
 
         if (idsNivel == null || idsNivel.length == 0)
         {
-            return ResultadoSimple.fallo("Agrega al menos un tramo de nivel académico (por ejemplo, TSU del cuatrimestre 1 al 6).");
+            return ResultadoSimple.fallo("Agrega al menos un nivel dentro del plan (por ejemplo, TSU del cuatrimestre 1 al 6). Este paso es obligatorio: un plan no puede quedar Vigente sin niveles.");
         }
 
         for (int i = 0; i < idsNivel.length; i++)
@@ -71,19 +83,39 @@ public class ServicioPlanEstudio
             }
         }
 
-        int idPlan = daoPlanEstudio.agregar(plan);
-
-        for (int i = 0; i < idsNivel.length; i++)
+        try (Connection conexion = ConexionMySQL.obtenerConexion())
         {
-            daoPlanNivel.agregar(idPlan, idsNivel[i], cuatrimestresInicio[i], cuatrimestresFin[i]);
+            conexion.setAutoCommit(false);
+
+            try
+            {
+                int idPlan = daoPlanEstudio.agregar(conexion, plan);
+
+                for (int i = 0; i < idsNivel.length; i++)
+                {
+                    daoPlanNivel.agregar(conexion, idPlan, idsNivel[i], cuatrimestresInicio[i], cuatrimestresFin[i]);
+                }
+
+                daoPlanCuatrimestre.generarParaPlan(conexion, idPlan, plan.getDuracionCuatrimestres());
+                daoPlanEstudio.marcarVigente(conexion, idPlan);
+
+                conexion.commit();
+
+                servicioBitacora.registrarAlta(responsable, "planes_estudio", idPlan,
+                        "Alta de plan de estudios " + plan.getNombrePlan() + " versión " + plan.getVersion());
+
+                return ResultadoSimple.exito(idPlan);
+            }
+            catch (SQLException excepcion)
+            {
+                conexion.rollback();
+                throw new RuntimeException(excepcion);
+            }
         }
-
-        daoPlanCuatrimestre.generarParaPlan(idPlan, plan.getDuracionCuatrimestres());
-
-        servicioBitacora.registrarAlta(responsable, "planes_estudio", idPlan,
-                "Alta de plan de estudios " + plan.getNombrePlan() + " versión " + plan.getVersion());
-
-        return ResultadoSimple.exito(idPlan);
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
     }
 
     /**

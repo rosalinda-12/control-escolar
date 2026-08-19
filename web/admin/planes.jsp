@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.PlanEstudio"%>
 <%@page import="modelo.Carrera"%>
 <%@page import="modelo.NivelAcademico"%>
@@ -129,16 +129,19 @@
 
                             <hr>
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">Tramos de nivel académico</label>
+                                <label class="form-label mb-0">Niveles dentro del plan <span class="text-danger">*</span></label>
                                 <button type="button" class="btn btn-sm btn-outline-formal" id="btnAgregarTramo">
                                     <i class="bi bi-plus-lg me-1"></i>Agregar tramo
                                 </button>
                             </div>
-                            <p class="texto-info">Ejemplo: TSU del cuatrimestre 1 al 6, Ingeniería del 7 al 11.</p>
+                            <p class="texto-info">Ejemplo: TSU del cuatrimestre 1 al 6, Ingeniería del 7 al 11. <strong>Obligatorio:</strong> un plan no puede quedar Vigente sin al menos un nivel académico definido.</p>
                             <div id="contenedorTramos"></div>
+                            <div id="avisoSinTramos" class="mensaje-error d-none">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Agrega al menos un nivel académico antes de guardar el plan; sin esto el plan no puede quedar Vigente.
+                            </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary-formal">Guardar y continuar con el currículo</button>
+                            <button type="submit" class="btn btn-primary-formal" id="btnGuardarPlan">Guardar y continuar con el currículo</button>
                         </div>
                     </form>
                 </div>
@@ -171,23 +174,60 @@
         <script>
             const contenedorTramos = document.getElementById("contenedorTramos");
             const plantillaTramo = document.getElementById("plantillaTramo");
+            const avisoSinTramos = document.getElementById("avisoSinTramos");
+            const formPlan = document.getElementById("formPlan");
+            const btnGuardarPlan = document.getElementById("btnGuardarPlan");
 
             function agregarTramo()
             {
                 contenedorTramos.appendChild(plantillaTramo.content.cloneNode(true));
+                actualizarEstadoTramos();
+            }
+
+            // El paso "Niveles dentro del plan" es obligatorio: nunca se
+            // permite quedar en cero tramos, y el botón de guardar refleja
+            // ese estado para que el admin no pueda saltárselo por accidente.
+            function actualizarEstadoTramos()
+            {
+                const filas = contenedorTramos.querySelectorAll(".tramo-nivel");
+                const hayTramos = filas.length > 0;
+
+                filas.forEach(function (fila)
+                {
+                    const botonQuitar = fila.querySelector(".btn-quitar-tramo");
+                    botonQuitar.disabled = filas.length === 1;
+                });
+
+                avisoSinTramos.classList.toggle("d-none", hayTramos);
+                btnGuardarPlan.disabled = !hayTramos;
+
+                return hayTramos;
             }
 
             document.getElementById("btnAgregarTramo").addEventListener("click", agregarTramo);
             contenedorTramos.addEventListener("click", function (evento)
             {
                 const boton = evento.target.closest(".btn-quitar-tramo");
-                if (boton)
+                if (boton && !boton.disabled)
                 {
                     boton.closest(".tramo-nivel").remove();
+                    actualizarEstadoTramos();
+                }
+            });
+
+            formPlan.addEventListener("submit", function (evento)
+            {
+                if (!actualizarEstadoTramos())
+                {
+                    evento.preventDefault();
+                    avisoSinTramos.scrollIntoView({behavior: "smooth", block: "center"});
                 }
             });
 
             agregarTramo();
         </script>
+            </main>
+    </div>
+</div>
     </body>
 </html>

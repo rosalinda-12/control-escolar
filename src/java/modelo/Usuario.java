@@ -14,12 +14,18 @@ public class Usuario
     private String nombreRol;
     private Integer idProfesor;
     private Integer idAlumno;
+    private Integer idCarrera;
     private String codigoVerificacion;
     private LocalDateTime expiracionCodigo;
     private boolean correoVerificado;
     private String estatusRegistro;
     private boolean requiereCambioContrasena;
     private LocalDateTime fechaCreacion;
+
+    // Copiado de roles.es_administrador_principal al cargar el usuario,
+    // para que ServicioAutorizacion no tenga que ir a buscar el rol
+    // aparte en cada validación de permiso.
+    private boolean administradorPrincipal;
 
     public int getIdUsuario()
     {
@@ -121,6 +127,21 @@ public class Usuario
         this.idAlumno = idAlumno;
     }
 
+    /**
+     * Carrera a la que está restringido este usuario. Solo aplica (no
+     * nula) cuando nombreRol es "Subdirector"; para el resto de los
+     * roles siempre es null.
+     */
+    public Integer getIdCarrera()
+    {
+        return idCarrera;
+    }
+
+    public void setIdCarrera(Integer idCarrera)
+    {
+        this.idCarrera = idCarrera;
+    }
+
     public String getCodigoVerificacion()
     {
         return codigoVerificacion;
@@ -194,5 +215,35 @@ public class Usuario
     public boolean esAlumno()
     {
         return "Alumno".equals(nombreRol);
+    }
+
+    public boolean esSubdirector()
+    {
+        return "Subdirector".equals(nombreRol);
+    }
+
+    public boolean esControlEscolar()
+    {
+        return "Control Escolar".equals(nombreRol);
+    }
+
+    /**
+     * true para cualquier rol que use el área /admin/* (Administrador y
+     * Control Escolar); dentro de esa área cada acción se sigue
+     * filtrando con el permiso puntual vía ServicioAutorizacion.
+     */
+    public boolean puedeEntrarAAreaAdmin()
+    {
+        return esAdministrador() || esControlEscolar();
+    }
+
+    public boolean isAdministradorPrincipal()
+    {
+        return administradorPrincipal;
+    }
+
+    public void setAdministradorPrincipal(boolean administradorPrincipal)
+    {
+        this.administradorPrincipal = administradorPrincipal;
     }
 }

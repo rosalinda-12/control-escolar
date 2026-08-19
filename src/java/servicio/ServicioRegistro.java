@@ -3,11 +3,13 @@ package servicio;
 import doa.DAOAlumno;
 import doa.DAODocente;
 import doa.DAORol;
+import doa.DAOSubdirector;
 import doa.DAOTrayectoriaAcademica;
 import doa.DAOUsuario;
 import modelo.Alumno;
 import modelo.Docente;
 import modelo.Rol;
+import modelo.Subdirector;
 import modelo.TrayectoriaAcademica;
 import modelo.Usuario;
 import util.CodigoUtil;
@@ -20,6 +22,7 @@ public class ServicioRegistro
     private final DAOAlumno daoAlumno;
     private final DAOTrayectoriaAcademica daoTrayectoria;
     private final DAODocente daoDocente;
+    private final DAOSubdirector daoSubdirector;
     private final DAORol daoRol;
 
     public ServicioRegistro()
@@ -28,6 +31,7 @@ public class ServicioRegistro
         this.daoAlumno = new DAOAlumno();
         this.daoTrayectoria = new DAOTrayectoriaAcademica();
         this.daoDocente = new DAODocente();
+        this.daoSubdirector = new DAOSubdirector();
         this.daoRol = new DAORol();
     }
 
@@ -150,6 +154,49 @@ public class ServicioRegistro
 
         int idUsuario = daoUsuario.agregar(usuario);
         EmailUtil.enviarCodigoVerificacion(correo, docente.getNombres(), usuario.getCodigoVerificacion());
+
+        return ResultadoRegistro.exito(idUsuario);
+    }
+
+    /**
+     * El Subdirector, igual que el Alumno y el Maestro, primero es dado
+     * de alta por el Admin/Control Escolar (correo + carrera, en
+     * ServicioSubdirector) y luego se autoregistra aquí con ese mismo
+     * correo. Ya no existe el alta directa de cuenta con contraseña
+     * temporal.
+     */
+    public ResultadoRegistro registrarSubdirector(String correo, String contrasenaPlana)
+    {
+        Subdirector subdirector = daoSubdirector.buscarPorCorreo(correo);
+
+        if (subdirector == null)
+        {
+            return ResultadoRegistro.fallo("Ese correo no coincide con ningún subdirector dado de alta. Pide al Administrador o a Control Escolar que verifique tu registro.");
+        }
+
+        if (daoUsuario.buscarPorCorreo(correo) != null)
+        {
+            return ResultadoRegistro.fallo("Ese correo ya tiene una cuenta registrada.");
+        }
+
+        Rol rolSubdirector = daoRol.buscarPorNombre("Subdirector");
+
+        Usuario usuario = new Usuario();
+        usuario.setNombres(subdirector.getNombres());
+        usuario.setApellidoPaterno(subdirector.getApellidoPaterno());
+        usuario.setApellidoMaterno(subdirector.getApellidoMaterno());
+        usuario.setCorreo(correo);
+        usuario.setContrasena(PasswordUtil.generarHash(contrasenaPlana));
+        usuario.setIdRol(rolSubdirector.getIdRol());
+        usuario.setIdCarrera(subdirector.getIdCarrera());
+        usuario.setCodigoVerificacion(CodigoUtil.generarCodigo());
+        usuario.setExpiracionCodigo(CodigoUtil.calcularExpiracion());
+        usuario.setCorreoVerificado(false);
+        usuario.setEstatusRegistro("Pendiente");
+        usuario.setRequiereCambioContrasena(true);
+
+        int idUsuario = daoUsuario.agregar(usuario);
+        EmailUtil.enviarCodigoVerificacion(correo, subdirector.getNombres(), usuario.getCodigoVerificacion());
 
         return ResultadoRegistro.exito(idUsuario);
     }

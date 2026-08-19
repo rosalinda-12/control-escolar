@@ -27,6 +27,11 @@ public class ServicioAutenticacion
             return ResultadoAutenticacion.correoNoVerificado();
         }
 
+        if ("Inactivo".equals(usuario.getEstatusRegistro()))
+        {
+            return ResultadoAutenticacion.cuentaDesactivada();
+        }
+
         if (!"Aprobado".equals(usuario.getEstatusRegistro()))
         {
             return ResultadoAutenticacion.registroNoAprobado();
@@ -66,6 +71,11 @@ public class ServicioAutenticacion
         public static ResultadoAutenticacion registroNoAprobado()
         {
             return new ResultadoAutenticacion(false, "Tu registro está pendiente de aprobación por el Administrador.", null);
+        }
+
+        public static ResultadoAutenticacion cuentaDesactivada()
+        {
+            return new ResultadoAutenticacion(false, "Esta cuenta fue desactivada. Contacta al Administrador.", null);
         }
 
         public boolean isExitoso()

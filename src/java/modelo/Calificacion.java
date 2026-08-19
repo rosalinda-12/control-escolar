@@ -23,6 +23,13 @@ public class Calificacion
     private String nombrePeriodo;
     private String nombreGrupo;
 
+    // Campos de solo lectura adicionales (vienen del JOIN) para la pantalla
+    // de calificaciones de Administrador/Control Escolar/Subdirector, que
+    // muestra todas las carreras (o solo la propia, en el caso del
+    // Subdirector) en lugar de un solo grupo-materia.
+    private int idCarrera;
+    private String nombreCarrera;
+
     public int getIdCalificacion()
     {
         return idCalificacion;
@@ -161,6 +168,26 @@ public class Calificacion
     public void setNombreGrupo(String nombreGrupo)
     {
         this.nombreGrupo = nombreGrupo;
+    }
+
+    public int getIdCarrera()
+    {
+        return idCarrera;
+    }
+
+    public void setIdCarrera(int idCarrera)
+    {
+        this.idCarrera = idCarrera;
+    }
+
+    public String getNombreCarrera()
+    {
+        return nombreCarrera;
+    }
+
+    public void setNombreCarrera(String nombreCarrera)
+    {
+        this.nombreCarrera = nombreCarrera;
     }
 
     /**

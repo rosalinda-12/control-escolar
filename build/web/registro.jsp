@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
     boolean existeAdministrador = Boolean.TRUE.equals(request.getAttribute("existeAdministrador"));
     String tipoSeleccionado = (String) request.getAttribute("tipoSeleccionado");
@@ -9,6 +9,7 @@
     boolean esAdministrador = "Administrador".equals(tipoSeleccionado);
     boolean esAlumno = "Alumno".equals(tipoSeleccionado);
     boolean esMaestro = "Maestro".equals(tipoSeleccionado);
+    boolean esSubdirector = "Subdirector".equals(tipoSeleccionado);
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -21,6 +22,10 @@
         <link rel="stylesheet" href="estilo/styles.css">
     </head>
     <body>
+        <script>(function(){try{var t=localStorage.getItem("ce-tema");if(!t){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+        <button type="button" class="theme-toggle-flotante theme-toggle" data-theme-toggle data-tooltip="Cambiar tema" aria-pressed="false">
+            <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+        </button>
         <div class="contenedor-centrado" style="max-width: 480px;">
             <div class="card card-formal">
                 <div class="card-header"><i class="bi bi-person-plus me-2"></i>Crear cuenta</div>
@@ -38,7 +43,15 @@
                         <a href="SRegistro?tipo=Maestro" class="btn btn-outline-formal <%= esMaestro ? "active" : ""%>">
                             <i class="bi bi-person-badge me-1"></i>Soy maestro
                         </a>
+                        <a href="SRegistro?tipo=Subdirector" class="btn btn-outline-formal <%= esSubdirector ? "active" : ""%>">
+                            <i class="bi bi-person-workspace me-1"></i>Soy subdirector
+                        </a>
                     </div>
+                    <p class="texto-info">
+                        <i class="bi bi-info-circle me-1"></i>Solo puedes registrarte con el mismo correo que
+                        el Administrador o Control Escolar usó para darte de alta. Después de registrarte,
+                        verifica tu correo y espera a que aprueben tu cuenta para poder iniciar sesión.
+                    </p>
                     <% } %>
 
                     <% if (request.getAttribute("error") != null) { %>

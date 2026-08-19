@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import modelo.Carrera;
 import modelo.Usuario;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioCarrera;
 import java.io.IOException;
 
@@ -17,6 +18,14 @@ public class ServletCarreras extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesion = solicitud.getSession(false);
+        Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, usuarioSesion, "carreras.ver"))
+        {
+            return;
+        }
+
         ServicioCarrera servicioCarrera = new ServicioCarrera();
         solicitud.setAttribute("carreras", servicioCarrera.listar());
 
@@ -36,9 +45,15 @@ public class ServletCarreras extends HttpServlet
         Usuario responsable = (Usuario) sesion.getAttribute("usuario");
         String accion = solicitud.getParameter("accion");
         ServicioCarrera servicioCarrera = new ServicioCarrera();
+        ServicioAutorizacion autorizacion = new ServicioAutorizacion();
 
         if ("Eliminar".equals(accion))
         {
+            if (!autorizacion.autorizarOResponder403(respuesta, responsable, "carreras.eliminar"))
+            {
+                return;
+            }
+
             ServicioCarrera.ResultadoCarrera resultado = servicioCarrera.eliminarODesactivar(
                     Integer.parseInt(solicitud.getParameter("idCarrera")), responsable);
 
@@ -62,6 +77,11 @@ public class ServletCarreras extends HttpServlet
         carrera.setNombreCarrera(solicitud.getParameter("tfNombreCarrera"));
         carrera.setClaveCarrera(solicitud.getParameter("tfClaveCarrera").toUpperCase());
 
+        if (!autorizacion.autorizarOResponder403(respuesta, responsable, "carreras.gestionar"))
+        {
+            return;
+        }
+
         ServicioCarrera.ResultadoCarrera resultado;
 
         if ("Modificar".equals(accion))
@@ -80,6 +100,19 @@ public class ServletCarreras extends HttpServlet
             solicitud.setAttribute("error", resultado.getMensajeError());
             solicitud.setAttribute("carreras", servicioCarrera.listar());
             solicitud.getServletContext().getRequestDispatcher("/admin/carreras.jsp").forward(solicitud, respuesta);
+            return;
+        }
+
+        // Si la carrera se creó desde un modal independiente en otra
+        // pantalla (por ejemplo, el botón "Agregar carrera" dentro de
+        // Trayectoria), "retorno" permite regresar ahí en lugar del
+        // listado de carreras. Solo se acepta una ruta relativa dentro
+        // del propio módulo de admin, para no abrir una redirección
+        // abierta hacia otro dominio.
+        String retorno = solicitud.getParameter("retorno");
+        if (retorno != null && retorno.startsWith("STrayectorias?idAlumno="))
+        {
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/" + retorno);
             return;
         }
 

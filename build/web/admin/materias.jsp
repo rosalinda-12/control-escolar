@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Materia"%>
 <%@page import="modelo.PlanCuatrimestre"%>
 <%@page import="java.util.ArrayList"%>
@@ -145,5 +145,8 @@
             new bootstrap.Modal(document.getElementById("modalMateria")).show();
         </script>
         <% } %>
+            </main>
+    </div>
+</div>
     </body>
 </html>

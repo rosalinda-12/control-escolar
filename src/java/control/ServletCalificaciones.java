@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import modelo.DocenteAsignacion;
 import modelo.Usuario;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioCalificacion;
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,6 +24,12 @@ public class ServletCalificaciones extends HttpServlet
         Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
         int idDocente = usuarioSesion.getIdProfesor();
         ServicioCalificacion servicioCalificacion = new ServicioCalificacion();
+        ServicioAutorizacion autorizacion = new ServicioAutorizacion();
+
+        if (!autorizacion.autorizarOResponder403(respuesta, usuarioSesion, "calificaciones.ver"))
+        {
+            return;
+        }
 
         String parametroGrupoMateria = solicitud.getParameter("idGrupoMateria");
 
@@ -34,6 +41,16 @@ public class ServletCalificaciones extends HttpServlet
         }
 
         int idGrupoMateria = Integer.parseInt(parametroGrupoMateria);
+
+        // Defensa en profundidad: si alguien cambia el id en la URL para
+        // apuntar a una materia de grupo que no es suya, se corta aquí
+        // mismo con 403 antes de tocar cualquier dato de otro docente.
+        if (!autorizacion.puedeOperarSobreGrupoMateria(usuarioSesion, idGrupoMateria))
+        {
+            respuesta.sendError(HttpServletResponse.SC_FORBIDDEN, "Esa materia de grupo no está a tu cargo.");
+            return;
+        }
+
         DocenteAsignacion contexto = servicioCalificacion.obtenerGrupoMateriaDelDocente(idGrupoMateria, idDocente);
 
         if (contexto == null)
@@ -56,8 +73,23 @@ public class ServletCalificaciones extends HttpServlet
         Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
         int idDocente = usuarioSesion.getIdProfesor();
         ServicioCalificacion servicioCalificacion = new ServicioCalificacion();
+        ServicioAutorizacion autorizacion = new ServicioAutorizacion();
+
+        if (!autorizacion.autorizarOResponder403(respuesta, usuarioSesion, "calificaciones.registrar"))
+        {
+            return;
+        }
 
         int idGrupoMateria = Integer.parseInt(solicitud.getParameter("idGrupoMateria"));
+
+        // Misma validación de alcance que en el GET: el permiso por sí
+        // solo no basta, también tiene que ser SU materia de grupo.
+        if (!autorizacion.puedeOperarSobreGrupoMateria(usuarioSesion, idGrupoMateria))
+        {
+            respuesta.sendError(HttpServletResponse.SC_FORBIDDEN, "Esa materia de grupo no está a tu cargo.");
+            return;
+        }
+
         int numeroParcial = Integer.parseInt(solicitud.getParameter("numeroParcial"));
 
         Map<Integer, String> notas = new HashMap<>();

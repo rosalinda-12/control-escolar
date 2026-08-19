@@ -5,20 +5,65 @@
     Object uriOriginal = request.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI);
     String uriActual = uriOriginal != null ? uriOriginal.toString() : request.getRequestURI();
     String contexto = request.getContextPath();
+
+    String iniciales = "" + (usuarioSesion.getNombres() != null && !usuarioSesion.getNombres().isEmpty() ? usuarioSesion.getNombres().charAt(0) : '?')
+            + (usuarioSesion.getApellidoPaterno() != null && !usuarioSesion.getApellidoPaterno().isEmpty() ? usuarioSesion.getApellidoPaterno().charAt(0) : "");
 %>
-<nav class="navbar navbar-expand-lg navbar-formal">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="<%= contexto %>/alumno/SPanel"><i class="bi bi-mortarboard me-2"></i>Control Escolar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuAlumno">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="menuAlumno">
-            <div class="navbar-nav flex-wrap">
-                <a class="nav-link <%= uriActual.contains("SPanel") ? "active" : ""%>" href="<%= contexto %>/alumno/SPanel">Panel</a>
-                <a class="nav-link <%= uriActual.contains("SCalificaciones") ? "active" : ""%>" href="<%= contexto %>/alumno/SCalificaciones">Mis calificaciones</a>
-                <a class="nav-link" href="<%= contexto %>/SLogout"><i class="bi bi-box-arrow-right me-1"></i>Salir</a>
-            </div>
+<script>(function(){try{var t=localStorage.getItem("ce-tema");if(!t){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<div class="app-shell">
+    <aside class="sidebar">
+        <a class="sidebar-brand" href="<%= contexto %>/alumno/SPanel">
+            <span class="sidebar-brand-icon"><i class="bi bi-shield-check"></i></span>
+            <span class="sidebar-brand-text">
+                <span>CONTROL ESCOLAR</span>
+                <span class="sidebar-brand-sub">Portal del Alumno</span>
+            </span>
+        </a>
+
+        <nav class="sidebar-nav">
+            <a class="sidebar-link <%= uriActual.contains("SPanel") ? "active" : ""%>" href="<%= contexto %>/alumno/SPanel">
+                <i class="bi bi-house-door"></i>Inicio
+            </a>
+            <a class="sidebar-link <%= uriActual.contains("SCalificaciones") ? "active" : ""%>" href="<%= contexto %>/alumno/SCalificaciones">
+                <i class="bi bi-journal-text"></i>Mis calificaciones
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a class="sidebar-link" href="<%= contexto %>/SLogout"><i class="bi bi-box-arrow-right"></i>Cerrar sesión</a>
         </div>
-        <span class="texto-info text-white ms-3 d-none d-lg-inline"><%= usuarioSesion.getNombres()%></span>
-    </div>
-</nav>
+    </aside>
+
+    <div class="main-wrap">
+        <header class="topbar">
+            <button class="topbar-toggle" type="button" data-toggle-sidebar aria-label="Abrir menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="topbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" data-buscador placeholder="Buscar...">
+                <kbd>Ctrl+K</kbd>
+            </div>
+            <div class="topbar-actions">
+                <button type="button" class="icon-btn theme-toggle" data-theme-toggle data-tooltip="Cambiar tema" aria-pressed="false">
+                    <i class="bi bi-moon-stars-fill"></i>
+                    <i class="bi bi-sun-fill"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="topbar-user btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="topbar-user-avatar"><%= iniciales.toUpperCase()%></div>
+                        <div class="topbar-user-info">
+                            <span class="topbar-user-name"><%= usuarioSesion.getNombres()%></span>
+                            <span class="topbar-user-role">Alumno</span>
+                        </div>
+                        <i class="bi bi-chevron-down topbar-user-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="px-3 py-1 texto-info">Sesión iniciada como<br><strong><%= usuarioSesion.getCorreo()%></strong></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<%= contexto %>/SLogout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <main class="contenido">

@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import modelo.Grupo;
 import modelo.Usuario;
 import servicio.ResultadoSimple;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioGeneracion;
 import servicio.ServicioGrupo;
 import servicio.ServicioPeriodo;
@@ -21,6 +22,14 @@ public class ServletGrupos extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesion = solicitud.getSession(false);
+        Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, usuarioSesion, "grupos.ver"))
+        {
+            return;
+        }
+
         ServicioGrupo servicioGrupo = new ServicioGrupo();
         solicitud.setAttribute("grupos", servicioGrupo.listar());
         solicitud.setAttribute("cuatrimestresDisponibles", new DAOPlanCuatrimestre().listarDePlanesVigentes());
@@ -36,6 +45,11 @@ public class ServletGrupos extends HttpServlet
         Usuario responsable = (Usuario) sesion.getAttribute("usuario");
         String accion = solicitud.getParameter("accion");
         ServicioGrupo servicioGrupo = new ServicioGrupo();
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, responsable, "grupos.gestionar"))
+        {
+            return;
+        }
 
         if ("Cerrar".equals(accion))
         {

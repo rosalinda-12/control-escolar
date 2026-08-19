@@ -45,22 +45,22 @@ public class DAOPlanNivel
         return lista;
     }
 
-    public void agregar(int idPlan, int idNivel, int cuatrimestreInicio, int cuatrimestreFin)
+    /**
+     * Inserta el tramo de nivel usando la misma conexión/transacción con la
+     * que se dio de alta el plan, para que el alta del plan y sus niveles
+     * sea una sola operación atómica (ver ServicioPlanEstudio.agregar).
+     */
+    public void agregar(Connection conexion, int idPlan, int idNivel, int cuatrimestreInicio, int cuatrimestreFin) throws SQLException
     {
         String sql = "INSERT INTO plan_niveles (id_plan, id_nivel, cuatrimestre_inicio, cuatrimestre_fin) VALUES (?, ?, ?, ?)";
 
-        try (Connection conexion = ConexionMySQL.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql))
         {
             sentencia.setInt(1, idPlan);
             sentencia.setInt(2, idNivel);
             sentencia.setInt(3, cuatrimestreInicio);
             sentencia.setInt(4, cuatrimestreFin);
             sentencia.executeUpdate();
-        }
-        catch (SQLException excepcion)
-        {
-            throw new RuntimeException(excepcion);
         }
     }
 

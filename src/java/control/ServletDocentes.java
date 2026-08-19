@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import modelo.Persona;
 import modelo.Usuario;
 import servicio.ResultadoSimple;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioDocente;
 import java.io.IOException;
 
@@ -18,6 +19,14 @@ public class ServletDocentes extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesion = solicitud.getSession(false);
+        Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, usuarioSesion, "docentes.ver"))
+        {
+            return;
+        }
+
         ServicioDocente servicioDocente = new ServicioDocente();
         solicitud.setAttribute("docentes", servicioDocente.listar());
         solicitud.getServletContext().getRequestDispatcher("/admin/docentes.jsp").forward(solicitud, respuesta);
@@ -30,6 +39,11 @@ public class ServletDocentes extends HttpServlet
         Usuario responsable = (Usuario) sesion.getAttribute("usuario");
         String accion = solicitud.getParameter("accion");
         ServicioDocente servicioDocente = new ServicioDocente();
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, responsable, "docentes.gestionar"))
+        {
+            return;
+        }
 
         if ("Desactivar".equals(accion))
         {

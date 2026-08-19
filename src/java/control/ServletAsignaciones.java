@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import modelo.Usuario;
 import servicio.ResultadoSimple;
 import servicio.ServicioAsignacionDocente;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioDocente;
 import servicio.ServicioGrupo;
 import java.io.IOException;
@@ -20,6 +21,14 @@ public class ServletAsignaciones extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesionLectura = solicitud.getSession(false);
+        Usuario usuarioSesionLectura = (Usuario) sesionLectura.getAttribute("usuario");
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, usuarioSesionLectura, "asignaciones.ver"))
+        {
+            return;
+        }
+
         int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
 
         HttpSession sesion = solicitud.getSession(false);
@@ -44,6 +53,14 @@ public class ServletAsignaciones extends HttpServlet
         String accion = solicitud.getParameter("accion");
         int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
         ServicioAsignacionDocente servicioAsignacion = new ServicioAsignacionDocente();
+        ServicioAutorizacion autorizacion = new ServicioAutorizacion();
+
+        String clavePermiso = "Quitar".equals(accion) ? "asignaciones.editar" : "asignaciones.crear";
+
+        if (!autorizacion.autorizarOResponder403(respuesta, responsable, clavePermiso))
+        {
+            return;
+        }
 
         if ("Quitar".equals(accion))
         {

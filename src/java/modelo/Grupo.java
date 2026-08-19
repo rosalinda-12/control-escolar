@@ -7,6 +7,7 @@ public class Grupo
     private int numeroCuatrimestre;
     private int idPlan;
     private String nombrePlan;
+    private int idCarrera;
     private String nombreCarrera;
     private String nombreGrupo;
     private int idGeneracion;
@@ -73,6 +74,16 @@ public class Grupo
     public void setNombreCarrera(String nombreCarrera)
     {
         this.nombreCarrera = nombreCarrera;
+    }
+
+    public int getIdCarrera()
+    {
+        return idCarrera;
+    }
+
+    public void setIdCarrera(int idCarrera)
+    {
+        this.idCarrera = idCarrera;
     }
 
     public String getNombreGrupo()

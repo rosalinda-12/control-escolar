@@ -16,6 +16,7 @@ public class Materia
     // la materia sin tener que ir a buscarlo aparte.
     private int numeroCuatrimestre;
     private String nombrePlan;
+    private int idCarrera;
     private String nombreCarrera;
 
     public int getIdMateria()
@@ -86,5 +87,15 @@ public class Materia
     public void setNombreCarrera(String nombreCarrera)
     {
         this.nombreCarrera = nombreCarrera;
+    }
+
+    public int getIdCarrera()
+    {
+        return idCarrera;
+    }
+
+    public void setIdCarrera(int idCarrera)
+    {
+        this.idCarrera = idCarrera;
     }
 }

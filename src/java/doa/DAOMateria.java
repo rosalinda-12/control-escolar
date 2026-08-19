@@ -13,11 +13,41 @@ public class DAOMateria
 {
     private static final String SELECCION_BASE =
             "SELECT m.id_materia, m.nombre_materia, m.estatus, m.id_plan_cuatrimestre, "
-            + "pc.numero_cuatrimestre, pe.nombre_plan, c.nombre_carrera "
+            + "pc.numero_cuatrimestre, pe.nombre_plan, c.id_carrera, c.nombre_carrera "
             + "FROM materias m "
             + "JOIN plan_cuatrimestres pc ON m.id_plan_cuatrimestre = pc.id_plan_cuatrimestre "
             + "JOIN planes_estudio pe ON pc.id_plan = pe.id_plan "
             + "JOIN carreras c ON pe.id_carrera = c.id_carrera ";
+
+    /**
+     * Materias de una sola carrera (activas), para el panel del
+     * Subdirector.
+     */
+    public ArrayList<Materia> listarPorCarrera(int idCarrera)
+    {
+        ArrayList<Materia> lista = new ArrayList<>();
+        String sql = SELECCION_BASE + "WHERE c.id_carrera = ? ORDER BY pe.nombre_plan, pc.numero_cuatrimestre, m.nombre_materia";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idCarrera);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next())
+                {
+                    lista.add(construirMateria(resultado));
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
 
     public ArrayList<Materia> listar()
     {
@@ -229,6 +259,7 @@ public class DAOMateria
         materia.setIdPlanCuatrimestre(resultado.getInt("id_plan_cuatrimestre"));
         materia.setNumeroCuatrimestre(resultado.getInt("numero_cuatrimestre"));
         materia.setNombrePlan(resultado.getString("nombre_plan"));
+        materia.setIdCarrera(resultado.getInt("id_carrera"));
         materia.setNombreCarrera(resultado.getString("nombre_carrera"));
         return materia;
     }

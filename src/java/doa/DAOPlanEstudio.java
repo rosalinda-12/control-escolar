@@ -136,13 +136,19 @@ public class DAOPlanEstudio
         return false;
     }
 
-    public int agregar(PlanEstudio plan)
+    /**
+     * Da de alta el plan en estado 'Borrador'. Nunca se inserta directamente
+     * como 'Vigente': eso lo impide también la base de datos (ver trigger
+     * trg_planes_bloquear_vigente_directo). El paso a Vigente ocurre en
+     * marcarVigente(), una vez que el plan ya tiene sus niveles registrados,
+     * dentro de la misma transacción.
+     */
+    public int agregar(Connection conexion, PlanEstudio plan) throws SQLException
     {
         String sql = "INSERT INTO planes_estudio (id_carrera, version, nombre_plan, duracion_cuatrimestres, fecha_vigencia_inicio, estatus) "
-                + "VALUES (?, ?, ?, ?, ?, 'Vigente')";
+                + "VALUES (?, ?, ?, ?, ?, 'Borrador')";
 
-        try (Connection conexion = ConexionMySQL.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
         {
             sentencia.setInt(1, plan.getIdCarrera());
             sentencia.setString(2, plan.getVersion());
@@ -159,12 +165,25 @@ public class DAOPlanEstudio
                 }
             }
         }
-        catch (SQLException excepcion)
-        {
-            throw new RuntimeException(excepcion);
-        }
 
         return 0;
+    }
+
+    /**
+     * Marca el plan como Vigente. Debe llamarse únicamente después de haber
+     * insertado al menos un tramo en plan_niveles para ese plan: el trigger
+     * trg_planes_bloquear_vigente_sin_niveles rechaza esta actualización si
+     * el plan aún no tiene niveles.
+     */
+    public void marcarVigente(Connection conexion, int idPlan) throws SQLException
+    {
+        String sql = "UPDATE planes_estudio SET estatus = 'Vigente' WHERE id_plan = ?";
+
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idPlan);
+            sentencia.executeUpdate();
+        }
     }
 
     public void actualizarEstatus(int idPlan, String estatus)

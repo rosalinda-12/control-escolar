@@ -23,6 +23,20 @@ public class ServicioAprobacionRegistro
     public void aprobar(int idUsuarioSolicitante, Usuario administrador)
     {
         Usuario solicitante = daoUsuario.buscarPorId(idUsuarioSolicitante);
+
+        if (solicitante == null)
+        {
+            return;
+        }
+
+        // No se puede aprobar antes de que la propia persona haya
+        // verificado su correo: el orden siempre es autoregistro ->
+        // verificación de correo -> aprobación.
+        if (!solicitante.isCorreoVerificado())
+        {
+            return;
+        }
+
         daoUsuario.actualizarEstatusRegistro(idUsuarioSolicitante, "Aprobado");
         servicioBitacora.registrarAlta(administrador, "usuarios", idUsuarioSolicitante,
                 "Aprobó el registro de " + solicitante.getCorreo() + " (" + solicitante.getNombreRol() + ")");

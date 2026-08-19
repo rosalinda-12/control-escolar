@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -10,6 +10,10 @@
         <link rel="stylesheet" href="estilo/styles.css">
     </head>
     <body>
+        <script>(function(){try{var t=localStorage.getItem("ce-tema");if(!t){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+        <button type="button" class="theme-toggle-flotante theme-toggle" data-theme-toggle data-tooltip="Cambiar tema" aria-pressed="false">
+            <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+        </button>
         <div class="contenedor-centrado">
             <div class="card card-formal">
                 <div class="card-header"><i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión</div>

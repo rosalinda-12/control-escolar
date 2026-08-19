@@ -46,9 +46,13 @@ public class ServletLogin extends HttpServlet
             return;
         }
 
-        if (usuario.esAdministrador())
+        if (usuario.puedeEntrarAAreaAdmin())
         {
             respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SPanel");
+        }
+        else if (usuario.esSubdirector())
+        {
+            respuesta.sendRedirect(solicitud.getContextPath() + "/subdirector/SPanel");
         }
         else if (usuario.esMaestro())
         {

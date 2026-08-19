@@ -56,6 +56,95 @@ public class ServicioCalificacion
     }
 
     /**
+     * Para la pantalla de Administrador/Control Escolar (ambos pueden ver
+     * todas las carreras, pasando idCarrera == null) y para la del
+     * Subdirector (que siempre manda su propia carrera, nunca null).
+     */
+    public ArrayList<Calificacion> listarParaAdmin(Integer idCarrera)
+    {
+        return daoCalificacion.listarPorCarrera(idCarrera);
+    }
+
+    public Calificacion buscarPorInscripcionMateria(int idInscripcionMateria)
+    {
+        return daoCalificacion.buscarPorInscripcionMateria(idInscripcionMateria);
+    }
+
+    /**
+     * Corrección administrativa de una calificación ya existente (a
+     * diferencia de la captura del Maestro, no está limitada al parcial
+     * activo del periodo: el Administrador y Control Escolar pueden
+     * corregir cualquier parcial de cualquier carrera). Vuelve a calcular
+     * el promedio final y el estado de la materia igual que la captura
+     * normal.
+     */
+    public ResultadoCaptura editarComoAdmin(int idInscripcionMateria, String parcial1Texto, String parcial2Texto,
+            String parcial3Texto, Usuario responsable)
+    {
+        Double parcial1;
+        Double parcial2;
+        Double parcial3;
+
+        try
+        {
+            parcial1 = convertirNota(parcial1Texto);
+            parcial2 = convertirNota(parcial2Texto);
+            parcial3 = convertirNota(parcial3Texto);
+        }
+        catch (NumberFormatException excepcion)
+        {
+            return ResultadoCaptura.fallo("Hay una calificación con un valor no numérico.");
+        }
+        catch (IllegalArgumentException excepcion)
+        {
+            return ResultadoCaptura.fallo(excepcion.getMessage());
+        }
+
+        daoCalificacion.actualizarParcial(idInscripcionMateria, 1, parcial1);
+        daoCalificacion.actualizarParcial(idInscripcionMateria, 2, parcial2);
+        daoCalificacion.actualizarParcial(idInscripcionMateria, 3, parcial3);
+        actualizarPromedioYEstado(idInscripcionMateria);
+
+        servicioBitacora.registrarAlta(responsable, "calificaciones", idInscripcionMateria,
+                "Corrigió manualmente la calificación de la inscripción-materia " + idInscripcionMateria);
+
+        return ResultadoCaptura.exito(1);
+    }
+
+    /**
+     * Elimina la calificación capturada (deja la materia como "Cursando"
+     * de nuevo, sin parciales). Solo el Administrador tiene este permiso
+     * por defecto; Control Escolar puede ver y editar pero no eliminar.
+     */
+    public void eliminarComoAdmin(int idInscripcionMateria, Usuario responsable)
+    {
+        daoCalificacion.eliminarPorInscripcionMateria(idInscripcionMateria);
+        daoInscripcionMateria.actualizarEstado(idInscripcionMateria, "Cursando");
+
+        servicioBitacora.registrarBaja(responsable, "calificaciones", idInscripcionMateria,
+                "Eliminó la calificación de la inscripción-materia " + idInscripcionMateria);
+    }
+
+    private Double convertirNota(String texto)
+    {
+        String limpio = texto == null ? "" : texto.trim();
+
+        if (limpio.isEmpty())
+        {
+            return null;
+        }
+
+        double nota = Double.parseDouble(limpio.replace(',', '.'));
+
+        if (nota < 0 || nota > 10)
+        {
+            throw new IllegalArgumentException("Las calificaciones deben estar entre 0 y 10.");
+        }
+
+        return Math.round(nota * 10.0) / 10.0;
+    }
+
+    /**
      * Arma la boleta de calificaciones que ve el propio alumno: sus
      * materias agrupadas por cuatrimestre, con el promedio final de cada
      * materia y el promedio general de cada cuatrimestre (el promedio de

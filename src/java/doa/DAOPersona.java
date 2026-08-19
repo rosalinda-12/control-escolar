@@ -35,6 +35,38 @@ public class DAOPersona
         return false;
     }
 
+    public Persona buscarPorCorreo(String correo)
+    {
+        String sql = "SELECT id_persona, nombres, apellido_paterno, apellido_materno, correo, estatus FROM personas WHERE correo = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, correo);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                if (resultado.next())
+                {
+                    Persona persona = new Persona();
+                    persona.setIdPersona(resultado.getInt("id_persona"));
+                    persona.setNombres(resultado.getString("nombres"));
+                    persona.setApellidoPaterno(resultado.getString("apellido_paterno"));
+                    persona.setApellidoMaterno(resultado.getString("apellido_materno"));
+                    persona.setCorreo(resultado.getString("correo"));
+                    persona.setEstatus(resultado.getString("estatus"));
+                    return persona;
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return null;
+    }
+
     public int agregar(Persona persona)
     {
         String sql = "INSERT INTO personas (nombres, apellido_paterno, apellido_materno, correo, estatus) VALUES (?, ?, ?, ?, 'Activo')";

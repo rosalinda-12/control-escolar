@@ -14,7 +14,8 @@ public class DAOUsuario
 {
     private static final String SELECCION_BASE =
             "SELECT u.id_usuario, u.nombres, u.apellido_paterno, u.apellido_materno, u.correo, u.contrasena, "
-            + "u.id_rol, r.nombre_rol, u.id_profesor, u.id_alumno, u.codigo_verificacion, u.expiracion_codigo, "
+            + "u.id_rol, r.nombre_rol, r.es_administrador_principal, u.id_profesor, u.id_alumno, u.id_carrera, "
+            + "u.codigo_verificacion, u.expiracion_codigo, "
             + "u.correo_verificado, u.estatus_registro, u.requiere_cambio_contrasena, u.fecha_creacion "
             + "FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ";
 
@@ -111,11 +112,124 @@ public class DAOUsuario
         return lista;
     }
 
+    /**
+     * Todos los usuarios del sistema (para la pantalla de administración
+     * de usuarios). No incluye la contraseña en el listado por seguridad
+     * de lectura, pero el objeto Usuario sí trae el resto de los datos.
+     */
+    public ArrayList<Usuario> listarTodos()
+    {
+        ArrayList<Usuario> lista = new ArrayList<>();
+        String sql = SELECCION_BASE + "ORDER BY r.nombre_rol, u.nombres";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql);
+             ResultSet resultado = sentencia.executeQuery())
+        {
+            while (resultado.next())
+            {
+                lista.add(construirUsuario(resultado));
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
+
+    /**
+     * Cambia el rol (y, si aplica, la carrera) de un usuario existente.
+     * idCarrera puede ser null (se limpia si el nuevo rol no es
+     * Subdirector).
+     */
+    public void actualizarRolYCarrera(int idUsuario, int idRol, Integer idCarrera)
+    {
+        String sql = "UPDATE usuarios SET id_rol = ?, id_carrera = ? WHERE id_usuario = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idRol);
+            establecerEnteroONulo(sentencia, 2, idCarrera);
+            sentencia.setInt(3, idUsuario);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
+    /**
+     * Baja lógica: igual que con carreras/materias/docentes, un usuario
+     * con historial (bitácora, calificaciones capturadas, etc.) no se
+     * borra físicamente para no romper ese historial; se marca como
+     * 'Inactivo' reutilizando la columna estatus_registro.
+     */
+    public void desactivar(int idUsuario)
+    {
+        String sql = "UPDATE usuarios SET estatus_registro = 'Inactivo' WHERE id_usuario = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idUsuario);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
+    public boolean tieneRegistrosEnBitacora(int idUsuario)
+    {
+        String sql = "SELECT COUNT(*) FROM auditoria WHERE id_usuario = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idUsuario);
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                if (resultado.next())
+                {
+                    return resultado.getInt(1) > 0;
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return false;
+    }
+
+    public void eliminar(int idUsuario)
+    {
+        String sql = "DELETE FROM usuarios WHERE id_usuario = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, idUsuario);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     public int agregar(Usuario usuario)
     {
         String sql = "INSERT INTO usuarios (nombres, apellido_paterno, apellido_materno, correo, contrasena, id_rol, "
-                + "id_profesor, id_alumno, codigo_verificacion, expiracion_codigo, correo_verificado, estatus_registro, "
-                + "requiere_cambio_contrasena) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "id_profesor, id_alumno, id_carrera, codigo_verificacion, expiracion_codigo, correo_verificado, estatus_registro, "
+                + "requiere_cambio_contrasena) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -128,11 +242,19 @@ public class DAOUsuario
             sentencia.setInt(6, usuario.getIdRol());
             establecerEnteroONulo(sentencia, 7, usuario.getIdProfesor());
             establecerEnteroONulo(sentencia, 8, usuario.getIdAlumno());
-            sentencia.setString(9, usuario.getCodigoVerificacion());
-            sentencia.setTimestamp(10, Timestamp.valueOf(usuario.getExpiracionCodigo()));
-            sentencia.setBoolean(11, usuario.isCorreoVerificado());
-            sentencia.setString(12, usuario.getEstatusRegistro());
-            sentencia.setBoolean(13, usuario.isRequiereCambioContrasena());
+            establecerEnteroONulo(sentencia, 9, usuario.getIdCarrera());
+            sentencia.setString(10, usuario.getCodigoVerificacion());
+            if (usuario.getExpiracionCodigo() != null)
+            {
+                sentencia.setTimestamp(11, Timestamp.valueOf(usuario.getExpiracionCodigo()));
+            }
+            else
+            {
+                sentencia.setNull(11, java.sql.Types.TIMESTAMP);
+            }
+            sentencia.setBoolean(12, usuario.isCorreoVerificado());
+            sentencia.setString(13, usuario.getEstatusRegistro());
+            sentencia.setBoolean(14, usuario.isRequiereCambioContrasena());
             sentencia.executeUpdate();
 
             try (ResultSet llaves = sentencia.getGeneratedKeys())
@@ -280,12 +402,16 @@ public class DAOUsuario
         usuario.setContrasena(resultado.getString("contrasena"));
         usuario.setIdRol(resultado.getInt("id_rol"));
         usuario.setNombreRol(resultado.getString("nombre_rol"));
+        usuario.setAdministradorPrincipal(resultado.getBoolean("es_administrador_principal"));
 
         int idProfesor = resultado.getInt("id_profesor");
         usuario.setIdProfesor(resultado.wasNull() ? null : idProfesor);
 
         int idAlumno = resultado.getInt("id_alumno");
         usuario.setIdAlumno(resultado.wasNull() ? null : idAlumno);
+
+        int idCarrera = resultado.getInt("id_carrera");
+        usuario.setIdCarrera(resultado.wasNull() ? null : idCarrera);
 
         usuario.setCodigoVerificacion(resultado.getString("codigo_verificacion"));
 

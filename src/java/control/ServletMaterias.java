@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import modelo.Materia;
 import modelo.Usuario;
 import servicio.ResultadoSimple;
+import servicio.ServicioAutorizacion;
 import servicio.ServicioCurriculo;
 import servicio.ServicioMateria;
 import java.io.IOException;
@@ -19,6 +20,14 @@ public class ServletMaterias extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesion = solicitud.getSession(false);
+        Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
+
+        if (!new ServicioAutorizacion().autorizarOResponder403(respuesta, usuarioSesion, "materias.ver"))
+        {
+            return;
+        }
+
         ServicioMateria servicioMateria = new ServicioMateria();
         solicitud.setAttribute("materias", servicioMateria.listar());
         solicitud.setAttribute("cuatrimestres", new ServicioCurriculo().listarCuatrimestresDePlanesVigentes());
@@ -46,9 +55,15 @@ public class ServletMaterias extends HttpServlet
         Usuario responsable = (Usuario) sesion.getAttribute("usuario");
         String accion = solicitud.getParameter("accion");
         ServicioMateria servicioMateria = new ServicioMateria();
+        ServicioAutorizacion autorizacion = new ServicioAutorizacion();
 
         if ("Eliminar".equals(accion))
         {
+            if (!autorizacion.autorizarOResponder403(respuesta, responsable, "materias.eliminar"))
+            {
+                return;
+            }
+
             ServicioMateria.ResultadoDesactivable resultado = servicioMateria.eliminarODesactivar(
                     Integer.parseInt(solicitud.getParameter("idMateria")), responsable);
 
@@ -70,6 +85,11 @@ public class ServletMaterias extends HttpServlet
 
         Materia materia = new Materia();
         materia.setNombreMateria(solicitud.getParameter("tfNombreMateria"));
+
+        if (!autorizacion.autorizarOResponder403(respuesta, responsable, "materias.gestionar"))
+        {
+            return;
+        }
 
         ResultadoSimple resultado;
 

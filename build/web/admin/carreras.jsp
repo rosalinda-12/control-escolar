@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Carrera"%>
 <%@page import="java.util.ArrayList"%>
 <%
@@ -132,5 +132,8 @@
             new bootstrap.Modal(document.getElementById("modalCarrera")).show();
         </script>
         <% } %>
+            </main>
+    </div>
+</div>
     </body>
 </html>

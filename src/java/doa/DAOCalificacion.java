@@ -108,6 +108,68 @@ public class DAOCalificacion
     }
 
     /**
+     * Todas las calificaciones del sistema, con carrera/alumno/materia,
+     * para la pantalla de Administrador y Control Escolar (que pueden ver
+     * todas las carreras) y para el Subdirector (que solo puede ver la
+     * suya, pasando su id_carrera). idCarrera == null trae todas.
+     */
+    public ArrayList<Calificacion> listarPorCarrera(Integer idCarrera)
+    {
+        ArrayList<Calificacion> lista = new ArrayList<>();
+        String sql = "SELECT im.id_inscripcion_materia, im.intento, im.estado AS estado_materia, "
+                + "t.matricula, CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) AS nombre_alumno, "
+                + "car.id_carrera, car.nombre_carrera, "
+                + "mat.nombre_materia, pc.numero_cuatrimestre, per.nombre_periodo, g.nombre_grupo, "
+                + "cal.id_calificacion, cal.parcial_1, cal.parcial_2, cal.parcial_3, cal.promedio_final "
+                + "FROM inscripcion_materias im "
+                + "JOIN inscripciones i ON im.id_inscripcion = i.id_inscripcion "
+                + "JOIN trayectorias_academicas t ON i.id_trayectoria = t.id_trayectoria "
+                + "JOIN alumnos a ON t.id_alumno = a.id_alumno "
+                + "JOIN personas p ON a.id_persona = p.id_persona "
+                + "JOIN grupo_materias gm ON im.id_grupo_materia = gm.id_grupo_materia "
+                + "JOIN materias mat ON gm.id_materia = mat.id_materia "
+                + "JOIN grupos g ON i.id_grupo = g.id_grupo "
+                + "JOIN plan_cuatrimestres pc ON g.id_plan_cuatrimestre = pc.id_plan_cuatrimestre "
+                + "JOIN planes_estudio pe ON pc.id_plan = pe.id_plan "
+                + "JOIN carreras car ON pe.id_carrera = car.id_carrera "
+                + "JOIN periodos_escolares per ON i.id_periodo = per.id_periodo "
+                + "LEFT JOIN calificaciones cal ON cal.id_inscripcion_materia = im.id_inscripcion_materia "
+                + "WHERE i.estado = 'Activa' AND im.estado <> 'Baja' "
+                + (idCarrera != null ? "AND car.id_carrera = ? " : "")
+                + "ORDER BY car.nombre_carrera, p.apellido_paterno, p.apellido_materno, p.nombres, pc.numero_cuatrimestre, mat.nombre_materia";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            if (idCarrera != null)
+            {
+                sentencia.setInt(1, idCarrera);
+            }
+
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next())
+                {
+                    Calificacion calificacion = construirCalificacion(resultado);
+                    calificacion.setIdCarrera(resultado.getInt("id_carrera"));
+                    calificacion.setNombreCarrera(resultado.getString("nombre_carrera"));
+                    calificacion.setNombreMateria(resultado.getString("nombre_materia"));
+                    calificacion.setNumeroCuatrimestre(resultado.getInt("numero_cuatrimestre"));
+                    calificacion.setNombrePeriodo(resultado.getString("nombre_periodo"));
+                    calificacion.setNombreGrupo(resultado.getString("nombre_grupo"));
+                    lista.add(calificacion);
+                }
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
+
+    /**
      * Lee una sola fila de calificaciones (sin datos del alumno), útil
      * después de actualizar un parcial para decidir si ya se puede calcular
      * el promedio final.

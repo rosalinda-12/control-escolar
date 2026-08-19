@@ -10,12 +10,11 @@ import java.util.ArrayList;
 
 public class DAOPlanCuatrimestre
 {
-    public void generarParaPlan(int idPlan, int duracionCuatrimestres)
+    public void generarParaPlan(Connection conexion, int idPlan, int duracionCuatrimestres) throws SQLException
     {
         String sql = "INSERT INTO plan_cuatrimestres (id_plan, numero_cuatrimestre) VALUES (?, ?)";
 
-        try (Connection conexion = ConexionMySQL.obtenerConexion();
-             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        try (PreparedStatement sentencia = conexion.prepareStatement(sql))
         {
             for (int numero = 1; numero <= duracionCuatrimestres; numero++)
             {
@@ -24,10 +23,6 @@ public class DAOPlanCuatrimestre
                 sentencia.addBatch();
             }
             sentencia.executeBatch();
-        }
-        catch (SQLException excepcion)
-        {
-            throw new RuntimeException(excepcion);
         }
     }
 

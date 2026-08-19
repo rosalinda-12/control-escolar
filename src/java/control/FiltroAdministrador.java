@@ -14,6 +14,14 @@ import java.io.IOException;
 @WebFilter("/admin/*")
 public class FiltroAdministrador implements Filter
 {
+    /**
+     * Este filtro solo verifica que el usuario haya iniciado sesión con
+     * un rol que use el área /admin/* (Administrador o Control Escolar).
+     * NO decide qué puede hacer cada uno dentro de esa área: eso se
+     * valida permiso por permiso dentro de cada Servlet con
+     * ServicioAutorizacion (que sí distingue entre ambos roles y aplica
+     * rol_permisos), para no tener que duplicar rutas/JSPs por rol.
+     */
     @Override
     public void doFilter(ServletRequest solicitud, ServletResponse respuesta, FilterChain cadena) throws IOException, ServletException
     {
@@ -23,7 +31,7 @@ public class FiltroAdministrador implements Filter
 
         Object rol = sesion == null ? null : sesion.getAttribute("rol");
 
-        if (!"Administrador".equals(rol))
+        if (!"Administrador".equals(rol) && !"Control Escolar".equals(rol))
         {
             respuestaHttp.sendRedirect(solicitudHttp.getContextPath() + "/SLogin");
             return;
