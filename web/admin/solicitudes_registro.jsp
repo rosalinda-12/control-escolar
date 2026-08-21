@@ -25,6 +25,32 @@
                 <% if (solicitudes.isEmpty()) { %>
                 <p class="texto-info mb-0"><i class="bi bi-check2-circle me-1"></i>No hay solicitudes pendientes.</p>
                 <% } else { %>
+                <div class="barra-filtros" data-filtros-tabla="#tbodySolicitudes">
+                    <div class="campo-filtro">
+                        <label for="filtroVerificadoSolicitudes">Correo verificado</label>
+                        <select id="filtroVerificadoSolicitudes" class="form-select form-select-sm" data-filtro-campo="verificado">
+                            <option value="" selected>Todos</option>
+                            <option value="Si">Verificado</option>
+                            <option value="No">Todavía no</option>
+                        </select>
+                    </div>
+                    <div class="campo-filtro">
+                        <label for="filtroRolSolicitudes">Rol</label>
+                        <select id="filtroRolSolicitudes" class="form-select form-select-sm" data-filtro-campo="rol">
+                            <option value="" selected>Todos</option>
+                            <% java.util.LinkedHashSet<String> rolesSolicitudes = new java.util.LinkedHashSet<String>();
+                               for (Usuario s : solicitudes) { rolesSolicitudes.add(s.getNombreRol()); }
+                               for (String nombreRol : rolesSolicitudes) { %>
+                            <option value="<%= nombreRol%>"><%= nombreRol%></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="campo-filtro campo-filtro-texto">
+                        <label for="filtroTextoSolicitudes">Buscar</label>
+                        <input type="text" id="filtroTextoSolicitudes" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre o correo...">
+                    </div>
+                    <span class="filtro-contador" data-filtro-contador></span>
+                </div>
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
@@ -35,9 +61,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodySolicitudes">
                         <% for (Usuario solicitante : solicitudes) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-verificado="<%= solicitante.isCorreoVerificado() ? "Si" : "No"%>" data-rol="<%= solicitante.getNombreRol()%>">
                             <td><%= solicitante.getNombres()%> <%= solicitante.getApellidoPaterno()%></td>
                             <td><%= solicitante.getCorreo()%></td>
                             <td><%= solicitante.getNombreRol()%></td>
@@ -67,6 +93,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
                 <% } %>
             </div>
         </div>

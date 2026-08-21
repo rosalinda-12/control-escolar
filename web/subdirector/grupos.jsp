@@ -20,7 +20,7 @@
         <div class="container">
             <div class="mt-4">
                 <h2>Grupos de mi carrera</h2>
-                <p class="texto-info mb-0">Elige un grupo para asignarle materias a tus docentes.</p>
+                <p class="texto-info mb-0">Consulta los grupos y los docentes asignados de tu carrera.</p>
             </div>
 
             <% if (request.getAttribute("error") != null) { %>
@@ -30,6 +30,32 @@
                 <i class="bi bi-info-circle me-1"></i>Todavía no hay grupos registrados para tu carrera.
             </div>
             <% } else { %>
+            <div class="barra-filtros mt-3" data-filtros-tabla="#tbodyGruposSubdirector">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusGruposSubdirector">Estatus</label>
+                    <select id="filtroEstatusGruposSubdirector" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="" selected>Todos</option>
+                        <option value="Activo">Activos</option>
+                        <option value="Cerrado">Cerrados</option>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroPeriodoGruposSubdirector">Periodo</label>
+                    <select id="filtroPeriodoGruposSubdirector" class="form-select form-select-sm" data-filtro-campo="periodo">
+                        <option value="" selected>Todos</option>
+                        <% java.util.LinkedHashSet<String> periodosGrupos = new java.util.LinkedHashSet<String>();
+                           for (Grupo g : grupos) { periodosGrupos.add(g.getNombrePeriodo()); }
+                           for (String periodo : periodosGrupos) { %>
+                        <option value="<%= periodo%>"><%= periodo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoGruposSubdirector">Buscar</label>
+                    <input type="text" id="filtroTextoGruposSubdirector" class="form-control form-control-sm" data-filtro-texto placeholder="Grupo, plan...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap mt-3">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -42,9 +68,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyGruposSubdirector">
                         <% for (Grupo g : grupos) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= g.getEstatus()%>" data-periodo="<%= g.getNombrePeriodo()%>">
                             <td><%= g.getNombreGrupo()%></td>
                             <td><%= g.getNombrePlan()%></td>
                             <td><%= g.getNumeroCuatrimestre()%>°</td>
@@ -57,14 +83,15 @@
                                 <% } %>
                             </td>
                             <td class="text-end">
-                                <a href="SAsignaciones?idGrupo=<%= g.getIdGrupo()%>" class="btn btn-sm btn-outline-formal">
-                                    Asignar docentes
+                                <a href="SAsignaciones?idGrupo=<%= g.getIdGrupo()%>" class="btn btn-sm btn-icon-formal" title="Ver docentes" aria-label="Ver docentes">
+                                    <i class="bi bi-person-lines-fill"></i>
                                 </a>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún grupo coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>

@@ -47,4 +47,21 @@ public class ServicioCicloEscolar
         servicioBitacora.registrarBaja(responsable, "ciclos_escolares", idCiclo,
                 "Baja de ciclo escolar " + (ciclo != null ? ciclo.getNombreCiclo() : idCiclo));
     }
+
+    public ResultadoSimple actualizar(CicloEscolar ciclo, Usuario responsable)
+    {
+        CicloEscolar anterior = daoCicloEscolar.buscarPorId(ciclo.getIdCiclo());
+        if (anterior == null)
+        {
+            return ResultadoSimple.fallo("El ciclo escolar ya no existe.");
+        }
+        if (!anterior.getNombreCiclo().equals(ciclo.getNombreCiclo()) && daoCicloEscolar.existeNombre(ciclo.getNombreCiclo()))
+        {
+            return ResultadoSimple.fallo("Ya existe un ciclo escolar con ese nombre.");
+        }
+        daoCicloEscolar.actualizar(ciclo);
+        servicioBitacora.registrarAlta(responsable, "ciclos_escolares", ciclo.getIdCiclo(),
+                "Actualizó ciclo escolar de " + anterior.getNombreCiclo() + " a " + ciclo.getNombreCiclo());
+        return ResultadoSimple.exito(ciclo.getIdCiclo());
+    }
 }

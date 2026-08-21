@@ -14,11 +14,11 @@ public class DAOGrupoMateria
     {
         ArrayList<GrupoMateria> lista = new ArrayList<>();
         String sql = "SELECT gm.id_grupo_materia, gm.id_grupo, gm.id_materia, m.nombre_materia, "
-                + "a.id_asignacion, p.nombres, p.apellido_paterno "
+                + "a.id_asignacion, d.id_docente AS docente_activo, p.nombres, p.apellido_paterno "
                 + "FROM grupo_materias gm "
                 + "JOIN materias m ON gm.id_materia = m.id_materia "
                 + "LEFT JOIN docentes_asignaciones a ON a.id_grupo_materia = gm.id_grupo_materia "
-                + "LEFT JOIN docentes d ON a.id_docente = d.id_docente "
+                + "LEFT JOIN docentes d ON a.id_docente = d.id_docente AND d.estatus = 'Activo' "
                 + "LEFT JOIN personas p ON d.id_persona = p.id_persona "
                 + "WHERE gm.id_grupo = ? ORDER BY m.nombre_materia";
 
@@ -36,7 +36,7 @@ public class DAOGrupoMateria
                     grupoMateria.setIdGrupo(resultado.getInt("id_grupo"));
                     grupoMateria.setIdMateria(resultado.getInt("id_materia"));
                     grupoMateria.setNombreMateria(resultado.getString("nombre_materia"));
-                    grupoMateria.setTieneDocenteAsignado(resultado.getObject("id_asignacion") != null);
+                    grupoMateria.setTieneDocenteAsignado(resultado.getObject("docente_activo") != null);
                     if (grupoMateria.isTieneDocenteAsignado())
                     {
                         grupoMateria.setNombreDocente(resultado.getString("nombres") + " " + resultado.getString("apellido_paterno"));
@@ -53,11 +53,8 @@ public class DAOGrupoMateria
         return lista;
     }
 
-    /**
-     * Copia las materias ya ligadas a ese cuatrimestre del plan hacia el
-     * grupo recién creado, para que el admin no tenga que asignar materia
-     * por materia manualmente.
-     */
+
+
     public void copiarDesdeCurriculo(int idGrupo, int idPlanCuatrimestre)
     {
         String sql = "INSERT INTO grupo_materias (id_grupo, id_materia) "
@@ -76,10 +73,8 @@ public class DAOGrupoMateria
         }
     }
 
-    /**
-     * Se usa para decidir si una materia se puede eliminar por completo o si
-     * ya se copió a algún grupo y por lo tanto solo se puede desactivar.
-     */
+
+
     public boolean materiaEstaEnAlgunGrupo(int idMateria)
     {
         String sql = "SELECT COUNT(*) FROM grupo_materias WHERE id_materia = ?";

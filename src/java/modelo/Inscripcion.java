@@ -6,11 +6,13 @@ public class Inscripcion
 {
     private int idInscripcion;
     private int idTrayectoria;
+    private int idAlumno;
     private String matricula;
     private String nombreAlumno;
     private int idGrupo;
     private String nombreGrupo;
     private String nombreCarrera;
+    private String estatusAlumno;
     private int idPeriodo;
     private String nombrePeriodo;
     private LocalDateTime fechaInscripcion;
@@ -29,6 +31,16 @@ public class Inscripcion
     public int getIdTrayectoria()
     {
         return idTrayectoria;
+    }
+
+    public int getIdAlumno()
+    {
+        return idAlumno;
+    }
+
+    public void setIdAlumno(int idAlumno)
+    {
+        this.idAlumno = idAlumno;
     }
 
     public void setIdTrayectoria(int idTrayectoria)
@@ -84,6 +96,16 @@ public class Inscripcion
     public void setNombreCarrera(String nombreCarrera)
     {
         this.nombreCarrera = nombreCarrera;
+    }
+
+    public String getEstatusAlumno()
+    {
+        return estatusAlumno;
+    }
+
+    public void setEstatusAlumno(String estatusAlumno)
+    {
+        this.estatusAlumno = estatusAlumno;
     }
 
     public int getIdPeriodo()

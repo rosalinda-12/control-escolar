@@ -7,12 +7,8 @@ import java.sql.SQLException;
 
 public class DAOInscripcionMateria
 {
-    /**
-     * A partir de las materias ya asignadas al grupo (grupo_materias, que a
-     * su vez vino del currículo del plan), genera automáticamente una
-     * inscripcion_materia por cada una, y su calificación vacía asociada.
-     * El admin no tiene que dar de alta materia por materia.
-     */
+
+
     public void generarParaInscripcion(int idInscripcion, int idGrupo)
     {
         String sqlMaterias = "INSERT INTO inscripcion_materias (id_inscripcion, id_grupo_materia, intento, estado) "

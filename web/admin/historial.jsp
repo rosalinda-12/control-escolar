@@ -41,6 +41,21 @@
                 </div>
             </div>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyHistorial">
+                <div class="campo-filtro">
+                    <label for="filtroAccionHistorial">Acción</label>
+                    <select id="filtroAccionHistorial" class="form-select form-select-sm" data-filtro-campo="accion">
+                        <option value="" selected>Todas</option>
+                        <option value="ALTA">Altas</option>
+                        <option value="BAJA">Bajas</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoHistorial">Buscar</label>
+                    <input type="text" id="filtroTextoHistorial" class="form-control form-control-sm" data-filtro-texto placeholder="Responsable, detalle...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -52,9 +67,9 @@
                             <th>Detalle</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyHistorial">
                         <% for (Bitacora movimiento : movimientos) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-accion="<%= movimiento.getTipoAccion()%>">
                             <td><%= movimiento.getFechaAccion()%></td>
                             <td><%= movimiento.getCorreoUsuario()%></td>
                             <td>
@@ -68,6 +83,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
         </div>
 

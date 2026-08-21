@@ -34,12 +34,6 @@ public class DAOPermiso
         return lista;
     }
 
-    /**
-     * Catálogo completo con el estatus (activo/inactivo) que tiene cada
-     * permiso para el rol indicado. Si el rol todavía no tiene un
-     * renglón en rol_permisos para algún permiso, se muestra como
-     * inactivo por defecto (seguro por omisión).
-     */
     public ArrayList<Permiso> listarConEstatusPorRol(int idRol)
     {
         ArrayList<Permiso> catalogo = listarCatalogo();
@@ -79,11 +73,6 @@ public class DAOPermiso
         return activos;
     }
 
-    /**
-     * Claves de permiso activas para un rol, usadas por
-     * ServicioAutorizacion para validar accesos. Se resuelve con un solo
-     * JOIN para no ir por el catálogo completo cada vez.
-     */
     public Set<String> listarClavesActivasPorRol(int idRol)
     {
         Set<String> claves = new HashSet<>();
@@ -112,11 +101,6 @@ public class DAOPermiso
         return claves;
     }
 
-    /**
-     * Activa o desactiva un permiso para un rol. Usa "upsert" porque un
-     * rol nuevo (como uno que el Admin acaba de crear) todavía no tiene
-     * renglones en rol_permisos.
-     */
     public void establecer(int idRol, int idPermiso, boolean activo)
     {
         String sql = "INSERT INTO rol_permisos (id_rol, id_permiso, activo) VALUES (?, ?, ?) "

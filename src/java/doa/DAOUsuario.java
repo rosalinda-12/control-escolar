@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DAOUsuario
 {
@@ -53,7 +54,9 @@ public class DAOUsuario
             {
                 if (resultado.next())
                 {
-                    return construirUsuario(resultado);
+                    Usuario usuario = construirUsuario(resultado);
+                    cargarCarreras(usuario);
+                    return usuario;
                 }
             }
         }
@@ -78,7 +81,9 @@ public class DAOUsuario
             {
                 if (resultado.next())
                 {
-                    return construirUsuario(resultado);
+                    Usuario usuario = construirUsuario(resultado);
+                    cargarCarreras(usuario);
+                    return usuario;
                 }
             }
         }
@@ -101,7 +106,9 @@ public class DAOUsuario
         {
             while (resultado.next())
             {
-                lista.add(construirUsuario(resultado));
+                Usuario usuario = construirUsuario(resultado);
+                cargarCarreras(usuario);
+                lista.add(usuario);
             }
         }
         catch (SQLException excepcion)
@@ -112,11 +119,8 @@ public class DAOUsuario
         return lista;
     }
 
-    /**
-     * Todos los usuarios del sistema (para la pantalla de administración
-     * de usuarios). No incluye la contraseña en el listado por seguridad
-     * de lectura, pero el objeto Usuario sí trae el resto de los datos.
-     */
+
+
     public ArrayList<Usuario> listarTodos()
     {
         ArrayList<Usuario> lista = new ArrayList<>();
@@ -128,7 +132,9 @@ public class DAOUsuario
         {
             while (resultado.next())
             {
-                lista.add(construirUsuario(resultado));
+                Usuario usuario = construirUsuario(resultado);
+                cargarCarreras(usuario);
+                lista.add(usuario);
             }
         }
         catch (SQLException excepcion)
@@ -139,11 +145,8 @@ public class DAOUsuario
         return lista;
     }
 
-    /**
-     * Cambia el rol (y, si aplica, la carrera) de un usuario existente.
-     * idCarrera puede ser null (se limpia si el nuevo rol no es
-     * Subdirector).
-     */
+
+
     public void actualizarRolYCarrera(int idUsuario, int idRol, Integer idCarrera)
     {
         String sql = "UPDATE usuarios SET id_rol = ?, id_carrera = ? WHERE id_usuario = ?";
@@ -162,12 +165,8 @@ public class DAOUsuario
         }
     }
 
-    /**
-     * Baja lógica: igual que con carreras/materias/docentes, un usuario
-     * con historial (bitácora, calificaciones capturadas, etc.) no se
-     * borra físicamente para no romper ese historial; se marca como
-     * 'Inactivo' reutilizando la columna estatus_registro.
-     */
+
+
     public void desactivar(int idUsuario)
     {
         String sql = "UPDATE usuarios SET estatus_registro = 'Inactivo' WHERE id_usuario = ?";
@@ -291,12 +290,8 @@ public class DAOUsuario
         }
     }
 
-    /**
-     * Borra el código de verificación/recuperación y su expiración sin
-     * tocar correo_verificado. Se usa al terminar un flujo de recuperación
-     * de contraseña, para que ese código de un solo uso no se pueda
-     * reutilizar.
-     */
+
+
     public void limpiarCodigo(int idUsuario)
     {
         String sql = "UPDATE usuarios SET codigo_verificacion = NULL, expiracion_codigo = NULL WHERE id_usuario = ?";
@@ -426,5 +421,28 @@ public class DAOUsuario
         usuario.setFechaCreacion(fechaCreacion == null ? null : fechaCreacion.toLocalDateTime());
 
         return usuario;
+    }
+
+    private void cargarCarreras(Usuario usuario)
+    {
+        if (!usuario.esSubdirector()) return;
+
+        ArrayList<Integer> ids = new ArrayList<>();
+        String sql = "SELECT id_carrera FROM subdirector_carreras WHERE id_subdirector = "
+                + "(SELECT id_subdirector FROM subdirectores WHERE id_persona = "
+                + "(SELECT id_persona FROM personas WHERE correo = ?)) ORDER BY id_carrera";
+        try (Connection conexion = ConexionMySQL.obtenerConexion(); PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, usuario.getCorreo());
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next()) ids.add(resultado.getInt("id_carrera"));
+            }
+            if (!ids.isEmpty()) usuario.setIdsCarrera(ids);
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
     }
 }

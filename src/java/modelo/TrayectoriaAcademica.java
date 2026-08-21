@@ -8,9 +8,12 @@ public class TrayectoriaAcademica
     private int idAlumno;
     private String nombreAlumno;
     private int idPlan;
+    private int idCarrera;
     private String nombrePlan;
     private String nombreCarrera;
     private String matricula;
+    private String grupoAnterior;
+    private Integer idGrupoAnterior;
     private Integer idTrayectoriaAnterior;
     private String estado;
     private LocalDate fechaInicio;
@@ -51,6 +54,16 @@ public class TrayectoriaAcademica
         return idPlan;
     }
 
+    public int getIdCarrera()
+    {
+        return idCarrera;
+    }
+
+    public void setIdCarrera(int idCarrera)
+    {
+        this.idCarrera = idCarrera;
+    }
+
     public void setIdPlan(int idPlan)
     {
         this.idPlan = idPlan;
@@ -84,6 +97,26 @@ public class TrayectoriaAcademica
     public void setMatricula(String matricula)
     {
         this.matricula = matricula;
+    }
+
+    public String getGrupoAnterior()
+    {
+        return grupoAnterior;
+    }
+
+    public void setGrupoAnterior(String grupoAnterior)
+    {
+        this.grupoAnterior = grupoAnterior;
+    }
+
+    public Integer getIdGrupoAnterior()
+    {
+        return idGrupoAnterior;
+    }
+
+    public void setIdGrupoAnterior(Integer idGrupoAnterior)
+    {
+        this.idGrupoAnterior = idGrupoAnterior;
     }
 
     public Integer getIdTrayectoriaAnterior()

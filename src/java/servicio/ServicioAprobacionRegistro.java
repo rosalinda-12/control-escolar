@@ -3,6 +3,7 @@ package servicio;
 import doa.DAOUsuario;
 import modelo.Usuario;
 import java.util.ArrayList;
+import util.EmailUtil;
 
 public class ServicioAprobacionRegistro
 {
@@ -29,15 +30,14 @@ public class ServicioAprobacionRegistro
             return;
         }
 
-        // No se puede aprobar antes de que la propia persona haya
-        // verificado su correo: el orden siempre es autoregistro ->
-        // verificación de correo -> aprobación.
+
         if (!solicitante.isCorreoVerificado())
         {
             return;
         }
 
         daoUsuario.actualizarEstatusRegistro(idUsuarioSolicitante, "Aprobado");
+        EmailUtil.enviarResultadoSolicitud(solicitante.getCorreo(), solicitante.getNombres(), true, solicitante.getNombreRol());
         servicioBitacora.registrarAlta(administrador, "usuarios", idUsuarioSolicitante,
                 "Aprobó el registro de " + solicitante.getCorreo() + " (" + solicitante.getNombreRol() + ")");
     }
@@ -46,6 +46,7 @@ public class ServicioAprobacionRegistro
     {
         Usuario solicitante = daoUsuario.buscarPorId(idUsuarioSolicitante);
         daoUsuario.actualizarEstatusRegistro(idUsuarioSolicitante, "Rechazado");
+        EmailUtil.enviarResultadoSolicitud(solicitante.getCorreo(), solicitante.getNombres(), false, solicitante.getNombreRol());
         servicioBitacora.registrarBaja(administrador, "usuarios", idUsuarioSolicitante,
                 "Rechazó el registro de " + solicitante.getCorreo() + " (" + solicitante.getNombreRol() + ")");
     }

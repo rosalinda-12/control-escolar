@@ -13,7 +13,7 @@ public class DAOPlanNivel
     public ArrayList<PlanNivel> listarPorPlan(int idPlan)
     {
         ArrayList<PlanNivel> lista = new ArrayList<>();
-        String sql = "SELECT pn.id_plan_nivel, pn.id_plan, pn.id_nivel, pn.cuatrimestre_inicio, pn.cuatrimestre_fin, n.nombre_nivel "
+        String sql = "SELECT pn.id_plan_nivel, pn.id_plan, pn.id_nivel, pn.titulo_egreso, pn.cuatrimestre_inicio, pn.cuatrimestre_fin, n.nombre_nivel "
                 + "FROM plan_niveles pn JOIN niveles_academicos n ON pn.id_nivel = n.id_nivel "
                 + "WHERE pn.id_plan = ? ORDER BY pn.cuatrimestre_inicio";
 
@@ -31,6 +31,7 @@ public class DAOPlanNivel
                     planNivel.setIdPlan(resultado.getInt("id_plan"));
                     planNivel.setIdNivel(resultado.getInt("id_nivel"));
                     planNivel.setNombreNivel(resultado.getString("nombre_nivel"));
+                    planNivel.setTituloEgreso(resultado.getString("titulo_egreso"));
                     planNivel.setCuatrimestreInicio(resultado.getInt("cuatrimestre_inicio"));
                     planNivel.setCuatrimestreFin(resultado.getInt("cuatrimestre_fin"));
                     lista.add(planNivel);
@@ -45,21 +46,19 @@ public class DAOPlanNivel
         return lista;
     }
 
-    /**
-     * Inserta el tramo de nivel usando la misma conexión/transacción con la
-     * que se dio de alta el plan, para que el alta del plan y sus niveles
-     * sea una sola operación atómica (ver ServicioPlanEstudio.agregar).
-     */
-    public void agregar(Connection conexion, int idPlan, int idNivel, int cuatrimestreInicio, int cuatrimestreFin) throws SQLException
+
+
+    public void agregar(Connection conexion, int idPlan, int idNivel, String tituloEgreso, int cuatrimestreInicio, int cuatrimestreFin) throws SQLException
     {
-        String sql = "INSERT INTO plan_niveles (id_plan, id_nivel, cuatrimestre_inicio, cuatrimestre_fin) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO plan_niveles (id_plan, id_nivel, titulo_egreso, cuatrimestre_inicio, cuatrimestre_fin) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement sentencia = conexion.prepareStatement(sql))
         {
             sentencia.setInt(1, idPlan);
             sentencia.setInt(2, idNivel);
-            sentencia.setInt(3, cuatrimestreInicio);
-            sentencia.setInt(4, cuatrimestreFin);
+            sentencia.setString(3, tituloEgreso);
+            sentencia.setInt(4, cuatrimestreInicio);
+            sentencia.setInt(5, cuatrimestreFin);
             sentencia.executeUpdate();
         }
     }

@@ -3,25 +3,29 @@ package servicio;
 import doa.DAOCalificacion;
 import doa.DAODocenteAsignacion;
 import doa.DAOInscripcionMateria;
+import doa.DAOInscripcion;
+import doa.DAOTrayectoriaAcademica;
 import modelo.Calificacion;
 import modelo.DocenteAsignacion;
 import modelo.Usuario;
+import modelo.TrayectoriaAcademica;
+import modelo.Alumno;
+import util.EmailUtil;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
 
 public class ServicioCalificacion
 {
-    /**
-     * Nota mínima aprobatoria. Se deja como constante porque el reglamento
-     * de la institución podría cambiarla; hoy no hay ningún catálogo en la
-     * base de datos que la defina.
-     */
+
+
     private static final double NOTA_APROBATORIA = 6.0;
 
     private final DAODocenteAsignacion daoAsignacion;
     private final DAOCalificacion daoCalificacion;
     private final DAOInscripcionMateria daoInscripcionMateria;
     private final ServicioBitacora servicioBitacora;
+    private final ServicioAlumno servicioAlumno;
 
     public ServicioCalificacion()
     {
@@ -29,6 +33,7 @@ public class ServicioCalificacion
         this.daoCalificacion = new DAOCalificacion();
         this.daoInscripcionMateria = new DAOInscripcionMateria();
         this.servicioBitacora = new ServicioBitacora();
+        this.servicioAlumno = new ServicioAlumno();
     }
 
     public ArrayList<DocenteAsignacion> listarGruposDelDocente(int idDocente)
@@ -36,10 +41,8 @@ public class ServicioCalificacion
         return daoAsignacion.listarPorDocente(idDocente);
     }
 
-    /**
-     * Devuelve el contexto de la materia de grupo (para el encabezado de la
-     * pantalla de captura) solo si en verdad pertenece a ese docente.
-     */
+
+
     public DocenteAsignacion obtenerGrupoMateriaDelDocente(int idGrupoMateria, int idDocente)
     {
         if (!daoAsignacion.perteneceADocente(idGrupoMateria, idDocente))
@@ -55,14 +58,16 @@ public class ServicioCalificacion
         return daoCalificacion.listarPorGrupoMateria(idGrupoMateria);
     }
 
-    /**
-     * Para la pantalla de Administrador/Control Escolar (ambos pueden ver
-     * todas las carreras, pasando idCarrera == null) y para la del
-     * Subdirector (que siempre manda su propia carrera, nunca null).
-     */
+
+
     public ArrayList<Calificacion> listarParaAdmin(Integer idCarrera)
     {
         return daoCalificacion.listarPorCarrera(idCarrera);
+    }
+
+    public ArrayList<Calificacion> listarParaCarreras(List<Integer> idsCarrera)
+    {
+        return daoCalificacion.listarPorCarreras(idsCarrera);
     }
 
     public Calificacion buscarPorInscripcionMateria(int idInscripcionMateria)
@@ -70,14 +75,8 @@ public class ServicioCalificacion
         return daoCalificacion.buscarPorInscripcionMateria(idInscripcionMateria);
     }
 
-    /**
-     * Corrección administrativa de una calificación ya existente (a
-     * diferencia de la captura del Maestro, no está limitada al parcial
-     * activo del periodo: el Administrador y Control Escolar pueden
-     * corregir cualquier parcial de cualquier carrera). Vuelve a calcular
-     * el promedio final y el estado de la materia igual que la captura
-     * normal.
-     */
+
+
     public ResultadoCaptura editarComoAdmin(int idInscripcionMateria, String parcial1Texto, String parcial2Texto,
             String parcial3Texto, Usuario responsable)
     {
@@ -104,6 +103,8 @@ public class ServicioCalificacion
         daoCalificacion.actualizarParcial(idInscripcionMateria, 2, parcial2);
         daoCalificacion.actualizarParcial(idInscripcionMateria, 3, parcial3);
         actualizarPromedioYEstado(idInscripcionMateria);
+        int idAlumno = daoCalificacion.buscarIdAlumnoPorInscripcionMateria(idInscripcionMateria);
+        finalizarEgresoSiCorresponde(idAlumno);
 
         servicioBitacora.registrarAlta(responsable, "calificaciones", idInscripcionMateria,
                 "Corrigió manualmente la calificación de la inscripción-materia " + idInscripcionMateria);
@@ -111,11 +112,8 @@ public class ServicioCalificacion
         return ResultadoCaptura.exito(1);
     }
 
-    /**
-     * Elimina la calificación capturada (deja la materia como "Cursando"
-     * de nuevo, sin parciales). Solo el Administrador tiene este permiso
-     * por defecto; Control Escolar puede ver y editar pero no eliminar.
-     */
+
+
     public void eliminarComoAdmin(int idInscripcionMateria, Usuario responsable)
     {
         daoCalificacion.eliminarPorInscripcionMateria(idInscripcionMateria);
@@ -144,31 +142,30 @@ public class ServicioCalificacion
         return Math.round(nota * 10.0) / 10.0;
     }
 
-    /**
-     * Arma la boleta de calificaciones que ve el propio alumno: sus
-     * materias agrupadas por cuatrimestre, con el promedio final de cada
-     * materia y el promedio general de cada cuatrimestre (el promedio de
-     * los promedios finales de las materias que ya lo tienen calculado).
-     */
+
+
     public ArrayList<modelo.BoletaCuatrimestre> obtenerBoletaAlumno(int idAlumno)
     {
         ArrayList<Calificacion> materias = daoCalificacion.listarPorAlumno(idAlumno);
 
-        java.util.LinkedHashMap<Integer, modelo.BoletaCuatrimestre> porCuatrimestre = new java.util.LinkedHashMap<>();
+        java.util.LinkedHashMap<String, modelo.BoletaCuatrimestre> porCuatrimestre = new java.util.LinkedHashMap<>();
 
         for (Calificacion materia : materias)
         {
             int numero = materia.getNumeroCuatrimestre();
 
-            modelo.BoletaCuatrimestre boleta = porCuatrimestre.get(numero);
+            String clave = materia.getIdTrayectoria() + "-" + numero;
+            modelo.BoletaCuatrimestre boleta = porCuatrimestre.get(clave);
 
             if (boleta == null)
             {
                 boleta = new modelo.BoletaCuatrimestre();
+                boleta.setIdTrayectoria(materia.getIdTrayectoria());
                 boleta.setNumeroCuatrimestre(numero);
                 boleta.setNombrePeriodo(materia.getNombrePeriodo());
                 boleta.setNombreGrupo(materia.getNombreGrupo());
-                porCuatrimestre.put(numero, boleta);
+                boleta.setNombreNivel(materia.getNombreNivel());
+                porCuatrimestre.put(clave, boleta);
             }
 
             boleta.getMaterias().add(materia);
@@ -204,14 +201,8 @@ public class ServicioCalificacion
         return lista;
     }
 
-    /**
-     * Captura las notas del parcial indicado para varios alumnos a la vez.
-     * Solo se permite capturar el parcial que está activo en el periodo del
-     * grupo, y solo si la materia de grupo en verdad es del docente. Cuando
-     * los tres parciales de un alumno ya están capturados, calcula el
-     * promedio final y actualiza el estado de esa materia
-     * (Aprobada/Reprobada).
-     */
+
+
     public ResultadoCaptura capturar(int idGrupoMateria, int idDocente, int numeroParcial,
             Map<Integer, String> notasPorInscripcionMateria, Usuario responsable)
     {
@@ -277,6 +268,12 @@ public class ServicioCalificacion
 
             daoCalificacion.actualizarParcial(idInscripcionMateria, numeroParcial, nota);
             actualizarPromedioYEstado(idInscripcionMateria);
+            Calificacion calificacion = daoCalificacion.buscarPorInscripcionMateria(idInscripcionMateria);
+            if (calificacion != null && "Aprobada".equals(calificacion.getEstadoMateria()))
+            {
+                int idAlumno = daoCalificacion.buscarIdAlumnoPorInscripcionMateria(idInscripcionMateria);
+                finalizarEgresoSiCorresponde(idAlumno);
+            }
             actualizados++;
         }
 
@@ -287,10 +284,23 @@ public class ServicioCalificacion
         return ResultadoCaptura.exito(actualizados);
     }
 
+    public void finalizarEgresoSiCorresponde(int idAlumno)
+    {
+        Alumno alumno = servicioAlumno.buscarPorId(idAlumno);
+        if (alumno == null || "Egresado".equals(alumno.getEstatus())) return;
+        TrayectoriaAcademica trayectoria = new DAOTrayectoriaAcademica().buscarActivaPorAlumno(idAlumno);
+        if (trayectoria != null && new DAOTrayectoriaAcademica().estaListaParaEgreso(trayectoria.getIdTrayectoria()))
+        {
+            new DAOTrayectoriaAcademica().actualizarEstado(trayectoria.getIdTrayectoria(), "EGRESADA", true);
+            new DAOInscripcion().finalizarActivasDeTrayectoria(trayectoria.getIdTrayectoria());
+            servicioAlumno.marcarEgresado(idAlumno);
+            EmailUtil.enviarCambioTrayectoria(alumno.getCorreo(), alumno.getNombreCompleto(), "Egresado");
+        }
+    }
+
     private void actualizarPromedioYEstado(int idInscripcionMateria)
     {
-        // Vuelve a leer la fila recién actualizada para saber si ya están
-        // los tres parciales y poder calcular/limpiar el promedio.
+
         Calificacion calificacion = daoCalificacion.buscarPorInscripcionMateria(idInscripcionMateria);
 
         if (calificacion == null)

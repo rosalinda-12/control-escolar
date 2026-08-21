@@ -1,6 +1,8 @@
 package modelo;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Usuario
 {
@@ -15,6 +17,7 @@ public class Usuario
     private Integer idProfesor;
     private Integer idAlumno;
     private Integer idCarrera;
+    private List<Integer> idsCarrera = new ArrayList<>();
     private String codigoVerificacion;
     private LocalDateTime expiracionCodigo;
     private boolean correoVerificado;
@@ -22,9 +25,7 @@ public class Usuario
     private boolean requiereCambioContrasena;
     private LocalDateTime fechaCreacion;
 
-    // Copiado de roles.es_administrador_principal al cargar el usuario,
-    // para que ServicioAutorizacion no tenga que ir a buscar el rol
-    // aparte en cada validación de permiso.
+
     private boolean administradorPrincipal;
 
     public int getIdUsuario()
@@ -127,11 +128,8 @@ public class Usuario
         this.idAlumno = idAlumno;
     }
 
-    /**
-     * Carrera a la que está restringido este usuario. Solo aplica (no
-     * nula) cuando nombreRol es "Subdirector"; para el resto de los
-     * roles siempre es null.
-     */
+
+
     public Integer getIdCarrera()
     {
         return idCarrera;
@@ -140,6 +138,29 @@ public class Usuario
     public void setIdCarrera(Integer idCarrera)
     {
         this.idCarrera = idCarrera;
+        if (idCarrera != null && !idsCarrera.contains(idCarrera))
+        {
+            idsCarrera.add(idCarrera);
+        }
+    }
+
+    public List<Integer> getIdsCarrera()
+    {
+        return idsCarrera;
+    }
+
+    public void setIdsCarrera(List<Integer> idsCarrera)
+    {
+        this.idsCarrera = idsCarrera == null ? new ArrayList<>() : new ArrayList<>(idsCarrera);
+        if (idCarrera != null && !this.idsCarrera.contains(idCarrera))
+        {
+            this.idsCarrera.add(idCarrera);
+        }
+    }
+
+    public boolean tieneCarrera(int idCarrera)
+    {
+        return idsCarrera.contains(idCarrera) || (this.idCarrera != null && this.idCarrera == idCarrera);
     }
 
     public String getCodigoVerificacion()
@@ -227,11 +248,8 @@ public class Usuario
         return "Control Escolar".equals(nombreRol);
     }
 
-    /**
-     * true para cualquier rol que use el área /admin/* (Administrador y
-     * Control Escolar); dentro de esa área cada acción se sigue
-     * filtrando con el permiso puntual vía ServicioAutorizacion.
-     */
+
+
     public boolean puedeEntrarAAreaAdmin()
     {
         return esAdministrador() || esControlEscolar();

@@ -3,6 +3,11 @@
 <%@page import="servicio.ServicioUsuario"%>
 <%@page import="servicio.ServicioAlumno"%>
 <%@page import="servicio.ServicioAprobacionRegistro"%>
+<%@page import="servicio.ServicioCarrera"%>
+<%@page import="servicio.ServicioDocente"%>
+<%@page import="servicio.ServicioGrupo"%>
+<%@page import="servicio.ServicioMateria"%>
+<%@page import="servicio.ServicioPlanEstudio"%>
 <%@page import="java.time.LocalDate"%>
 <%@page import="java.time.YearMonth"%>
 <%@page import="java.time.format.TextStyle"%>
@@ -12,15 +17,20 @@
     Usuario usuarioSesionPanel = (Usuario) session.getAttribute("usuario");
     int totalUsuarios = new ServicioUsuario().listarTodos().size();
     int totalAlumnos = new ServicioAlumno().listar().size();
+    int totalDocentes = new ServicioDocente().listar().size();
     ArrayList<Usuario> solicitudesPendientes = new ServicioAprobacionRegistro().listarPendientes();
     int totalSolicitudes = solicitudesPendientes.size();
+    int totalCarreras = new ServicioCarrera().listar().size();
+    int totalMaterias = new ServicioMateria().listar().size();
+    int totalGrupos = new ServicioGrupo().listar().size();
+    int totalPlanes = new ServicioPlanEstudio().listar().size();
+    int maxCatalogo = Math.max(1, Math.max(Math.max(totalCarreras, totalMaterias), Math.max(totalGrupos, totalPlanes)));
 
-    // ---- Calendario del mes actual (widget) ----
     Locale es = new Locale("es", "MX");
     LocalDate hoy = LocalDate.now();
     YearMonth mesActual = YearMonth.from(hoy);
     LocalDate primerDiaMes = mesActual.atDay(1);
-    // Domingo = 1 ... Sábado = 7 (para que la semana empiece en domingo, como en la imagen)
+
     int desplazamientoInicial = primerDiaMes.getDayOfWeek().getValue() % 7;
     int diasEnMes = mesActual.lengthOfMonth();
     String nombreMes = mesActual.getMonth().getDisplayName(TextStyle.FULL, es);
@@ -89,111 +99,38 @@
             </div>
 
             <div class="row g-3 mt-1">
-                <div class="col-lg-8">
-                    <div class="panel-seccion h-100">
-                        <div class="panel-seccion-titulo">
-                            <h5><i class="bi bi-file-earmark-check"></i>Solicitudes pendientes</h5>
-                            <a href="SSolicitudesRegistro" class="texto-info fw-semibold text-decoration-none">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <div class="col-lg-8 d-flex">
+                    <div class="row g-3 flex-grow-1">
+                        <div class="col-md-6">
+                            <div class="panel-seccion grafica-panel h-100">
+                                <div class="panel-seccion-titulo">
+                                    <h5><i class="bi bi-pie-chart"></i>Distribuci&oacute;n del personal</h5>
+                                </div>
+                                <div class="grafica-pastel" data-valores="<%= totalUsuarios%>,<%= totalAlumnos%>,<%= totalDocentes%>">
+                                    <div class="grafica-pastel-circulo"></div>
+                                    <div class="grafica-leyenda">
+                                        <div><span class="grafica-leyenda-color grafica-azul"></span>Usuarios <strong><%= totalUsuarios%></strong></div>
+                                        <div><span class="grafica-leyenda-color grafica-morada"></span>Alumnos <strong><%= totalAlumnos%></strong></div>
+                                        <div><span class="grafica-leyenda-color grafica-naranja"></span>Docentes <strong><%= totalDocentes%></strong></div>
+                                    </div>
+                                </div>
+                                <p class="texto-info grafica-nota">Personas registradas en el sistema.</p>
+                            </div>
                         </div>
-
-                        <% if (solicitudesPendientes.isEmpty()) { %>
-                        <div class="text-center py-4">
-                            <i class="bi bi-emoji-smile" style="font-size: 1.8rem; color: var(--color-text-faint);"></i>
-                            <p class="texto-info mt-2 mb-0">No hay solicitudes pendientes por ahora.</p>
+                        <div class="col-md-6">
+                            <div class="panel-seccion grafica-panel h-100">
+                                <div class="panel-seccion-titulo">
+                                    <h5><i class="bi bi-bar-chart"></i>Cat&aacute;logos acad&eacute;micos</h5>
+                                </div>
+                                <div class="grafica-barras">
+                                    <div class="grafica-fila"><div class="grafica-etiqueta"><span>Carreras</span><strong><%= totalCarreras%></strong></div><div class="grafica-barra"><span class="grafica-barra-valor grafica-azul" style="--porcentaje: <%= totalCarreras * 100 / maxCatalogo%>%;"></span></div></div>
+                                    <div class="grafica-fila"><div class="grafica-etiqueta"><span>Materias</span><strong><%= totalMaterias%></strong></div><div class="grafica-barra"><span class="grafica-barra-valor grafica-morada" style="--porcentaje: <%= totalMaterias * 100 / maxCatalogo%>%;"></span></div></div>
+                                    <div class="grafica-fila"><div class="grafica-etiqueta"><span>Grupos</span><strong><%= totalGrupos%></strong></div><div class="grafica-barra"><span class="grafica-barra-valor grafica-naranja" style="--porcentaje: <%= totalGrupos * 100 / maxCatalogo%>%;"></span></div></div>
+                                    <div class="grafica-fila"><div class="grafica-etiqueta"><span>Planes</span><strong><%= totalPlanes%></strong></div><div class="grafica-barra"><span class="grafica-barra-valor grafica-verde" style="--porcentaje: <%= totalPlanes * 100 / maxCatalogo%>%;"></span></div></div>
+                                </div>
+                                <p class="texto-info grafica-nota">Registros disponibles en los cat&aacute;logos principales.</p>
+                            </div>
                         </div>
-                        <% } else { %>
-                        <div class="table-responsive">
-                            <table class="table table-formal align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Solicitante</th>
-                                        <th>Rol</th>
-                                        <th>Correo verificado</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <%
-                                        String[] tonos = {"tono-1", "tono-2", "tono-3", "tono-4", "tono-5"};
-                                        int indiceTono = 0;
-                                        int mostrados = 0;
-                                        for (Usuario solicitante : solicitudesPendientes) {
-                                            if (mostrados >= 5) break;
-                                            mostrados++;
-                                            String inicialesSolicitante = "" + (solicitante.getNombres() != null && !solicitante.getNombres().isEmpty() ? solicitante.getNombres().charAt(0) : '?')
-                                                    + (solicitante.getApellidoPaterno() != null && !solicitante.getApellidoPaterno().isEmpty() ? solicitante.getApellidoPaterno().charAt(0) : "");
-                                    %>
-                                    <tr>
-                                        <td>
-                                            <div class="persona-celda">
-                                                <div class="avatar-circle <%= tonos[indiceTono++ % tonos.length]%>"><%= inicialesSolicitante.toUpperCase()%></div>
-                                                <div>
-                                                    <div class="persona-nombre"><%= solicitante.getNombres()%> <%= solicitante.getApellidoPaterno()%></div>
-                                                    <div class="persona-correo"><%= solicitante.getCorreo()%></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="texto-info"><%= solicitante.getNombreRol()%></td>
-                                        <td>
-                                            <% if (solicitante.isCorreoVerificado()) { %>
-                                            <span class="badge-estatus badge-aprobado">Verificado</span>
-                                            <% } else { %>
-                                            <span class="badge-estatus badge-pendiente">Pendiente</span>
-                                            <% } %>
-                                        </td>
-                                        <td class="text-end">
-                                            <a class="accion-icono" href="SSolicitudesRegistro" data-tooltip="Ver solicitud"><i class="bi bi-eye"></i></a>
-                                        </td>
-                                    </tr>
-                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                        <% } %>
-                    </div>
-
-                    <h5 class="mt-4 mb-2"><i class="bi bi-lightning-charge me-2" style="color: var(--accent);"></i>Accesos rápidos</h5>
-                    <div class="accesos-grid">
-                        <a href="SSolicitudesRegistro" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-person-check"></i></span>
-                            <span class="acceso-tile-texto">Solicitudes</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SAlumnos" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-mortarboard"></i></span>
-                            <span class="acceso-tile-texto">Lista de alumnos</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SGrupos" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-people"></i></span>
-                            <span class="acceso-tile-texto">Control de grupos</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SMaterias" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-journal-bookmark"></i></span>
-                            <span class="acceso-tile-texto">Asignar materias</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SUsuarios" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-search"></i></span>
-                            <span class="acceso-tile-texto">Buscar usuario</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SConfiguracionParcial" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-toggles"></i></span>
-                            <span class="acceso-tile-texto">Configuración</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SReinscripciones" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-arrow-repeat"></i></span>
-                            <span class="acceso-tile-texto">Reinscripciones</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
-                        <a href="SBitacora" class="acceso-tile">
-                            <span class="acceso-tile-icon"><i class="bi bi-clock-history"></i></span>
-                            <span class="acceso-tile-texto">Historial</span>
-                            <i class="bi bi-chevron-right acceso-tile-flecha"></i>
-                        </a>
                     </div>
                 </div>
 
@@ -222,30 +159,6 @@
                         </div>
                     </div>
 
-                    <div class="panel-seccion">
-                        <h5 class="mb-3 d-flex align-items-center gap-2"><i class="bi bi-clock" style="color: var(--accent);"></i>Próximos eventos</h5>
-                        <div class="evento-item">
-                            <span class="evento-punto tono-verde"></span>
-                            <div>
-                                <div class="evento-titulo">Entrega de calificaciones</div>
-                                <div class="evento-fecha">Consulta el periodo activo en "Parcial activo"</div>
-                            </div>
-                        </div>
-                        <div class="evento-item">
-                            <span class="evento-punto tono-naranja"></span>
-                            <div>
-                                <div class="evento-titulo">Aprobación de registros</div>
-                                <div class="evento-fecha"><%= totalSolicitudes%> solicitud(es) esperando revisión</div>
-                            </div>
-                        </div>
-                        <div class="evento-item">
-                            <span class="evento-punto tono-azul"></span>
-                            <div>
-                                <div class="evento-titulo">Reinscripciones</div>
-                                <div class="evento-fecha">Revisa el catálogo de grupos del próximo ciclo</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

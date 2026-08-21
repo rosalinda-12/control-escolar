@@ -46,22 +46,30 @@ public class ServicioPlanEstudio
         return daoPlanNivel.listarPorPlan(idPlan);
     }
 
-    /**
-     * Crea el plan, registra sus tramos de nivel (por ejemplo TSU 1-6,
-     * Ingeniería 7-11) y genera automáticamente los N cuatrimestres según
-     * la duración indicada, para que el admin no tenga que darlos de alta
-     * uno por uno.
-     *
-     * "Niveles dentro del plan" es un paso obligatorio, no una sugerencia:
-     * el plan se crea en 'Borrador' y solo se marca 'Vigente' después de
-     * registrar al menos un nivel, todo dentro de la misma transacción. Si
-     * falta el nivel, o si algo falla a mitad de camino, no queda un plan
-     * a medias: se revierte todo. La base de datos refuerza esta misma
-     * regla con triggers (trg_planes_bloquear_vigente_directo y
-     * trg_planes_bloquear_vigente_sin_niveles), así que ni siquiera un
-     * script que hable directo con la BD puede saltársela.
-     */
-    public ResultadoSimple agregar(PlanEstudio plan, int[] idsNivel, int[] cuatrimestresInicio, int[] cuatrimestresFin, Usuario responsable)
+    public ResultadoSimple actualizar(PlanEstudio plan, Usuario responsable)
+    {
+        PlanEstudio anterior = daoPlanEstudio.buscarPorId(plan.getIdPlan());
+        if (anterior == null)
+        {
+            return ResultadoSimple.fallo("El plan ya no existe.");
+        }
+        if (daoPlanEstudio.tieneGruposAsociados(plan.getIdPlan()))
+        {
+            return ResultadoSimple.fallo("Este plan ya tiene grupos asociados y no puede editarse. Crea una nueva versión para conservar el historial.");
+        }
+        if ((anterior.getIdCarrera() != plan.getIdCarrera() || !anterior.getVersion().equals(plan.getVersion()))
+                && daoPlanEstudio.existeVersion(plan.getIdCarrera(), plan.getVersion()))
+        {
+            return ResultadoSimple.fallo("Esa carrera ya tiene un plan con esa versión.");
+        }
+        daoPlanEstudio.actualizar(plan);
+        servicioBitacora.registrarAlta(responsable, "planes_estudio", plan.getIdPlan(), "Actualizó el plan " + plan.getNombrePlan());
+        return ResultadoSimple.exito(plan.getIdPlan());
+    }
+
+
+
+    public ResultadoSimple agregar(PlanEstudio plan, int[] idsNivel, String[] titulosEgreso, int[] cuatrimestresInicio, int[] cuatrimestresFin, Usuario responsable)
     {
         if (daoPlanEstudio.existeVersion(plan.getIdCarrera(), plan.getVersion()))
         {
@@ -81,6 +89,13 @@ public class ServicioPlanEstudio
                 return ResultadoSimple.fallo("Los tramos de nivel deben estar dentro de la duración del plan (1 a "
                         + plan.getDuracionCuatrimestres() + ").");
             }
+
+            if (titulosEgreso == null || titulosEgreso[i] == null || titulosEgreso[i].isBlank())
+            {
+                return ResultadoSimple.fallo("Cada tramo debe indicar el título que se otorga al terminarlo (por ejemplo, "
+                        + "\"TSU en Tecnologías de la Información\" o \"Ingeniería en Desarrollo de Software Multiplataforma\"). "
+                        + "Si el título es el mismo en todos los tramos, repítelo.");
+            }
         }
 
         try (Connection conexion = ConexionMySQL.obtenerConexion())
@@ -93,7 +108,7 @@ public class ServicioPlanEstudio
 
                 for (int i = 0; i < idsNivel.length; i++)
                 {
-                    daoPlanNivel.agregar(conexion, idPlan, idsNivel[i], cuatrimestresInicio[i], cuatrimestresFin[i]);
+                    daoPlanNivel.agregar(conexion, idPlan, idsNivel[i], titulosEgreso[i].trim(), cuatrimestresInicio[i], cuatrimestresFin[i]);
                 }
 
                 daoPlanCuatrimestre.generarParaPlan(conexion, idPlan, plan.getDuracionCuatrimestres());
@@ -118,11 +133,8 @@ public class ServicioPlanEstudio
         }
     }
 
-    /**
-     * Un plan histórico nunca se edita para cambiar su significado (regla de
-     * negocio del documento de diseño). Lo único que el admin puede hacer
-     * después de creado es cerrarlo o reemplazarlo por una nueva versión.
-     */
+
+
     public ResultadoSimple cerrar(int idPlan, Usuario responsable)
     {
         PlanEstudio plan = daoPlanEstudio.buscarPorId(idPlan);

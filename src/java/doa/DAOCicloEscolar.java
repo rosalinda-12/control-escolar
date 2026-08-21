@@ -125,6 +125,23 @@ public class DAOCicloEscolar
         }
     }
 
+    public void actualizar(CicloEscolar ciclo)
+    {
+        String sql = "UPDATE ciclos_escolares SET nombre_ciclo = ? WHERE id_ciclo = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, ciclo.getNombreCiclo());
+            sentencia.setInt(2, ciclo.getIdCiclo());
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     private CicloEscolar construirCiclo(ResultSet resultado) throws SQLException
     {
         CicloEscolar ciclo = new CicloEscolar();

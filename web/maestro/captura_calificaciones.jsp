@@ -6,6 +6,7 @@
     DocenteAsignacion contexto = (DocenteAsignacion) request.getAttribute("contexto");
     ArrayList<Calificacion> alumnos = (ArrayList<Calificacion>) request.getAttribute("alumnos");
     Integer parcialActivo = contexto == null ? null : contexto.getParcialActivo();
+    boolean soloLectura = Boolean.TRUE.equals(request.getAttribute("soloLectura"));
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -42,7 +43,7 @@
             <div class="mensaje-exito mt-3"><i class="bi bi-check-circle me-1"></i><%= request.getAttribute("exito")%></div>
             <% } %>
 
-            <% if (parcialActivo == null) { %>
+            <% if (parcialActivo == null && !soloLectura) { %>
             <div class="mensaje-error mt-3">
                 Todavía no hay un parcial activo configurado para este periodo, así que no puedes capturar calificaciones.
             </div>
@@ -74,7 +75,7 @@
                                 <td><%= calificacion.getNombreAlumno()%></td>
                                 <% for (int numeroColumna = 1; numeroColumna <= 3; numeroColumna++) { %>
                                 <td class="text-center" style="max-width: 100px;">
-                                    <% if (numeroColumna == parcialActivo) { %>
+                                    <% if (parcialActivo != null && numeroColumna == parcialActivo && !soloLectura) { %>
                                     <input type="number" step="0.1" min="0" max="10" class="form-control form-control-sm text-center"
                                            name="nota_<%= calificacion.getIdInscripcionMateria()%>"
                                            value="<%= calificacion.getParcial(numeroColumna) == null ? "" : calificacion.getParcial(numeroColumna)%>">
@@ -104,9 +105,13 @@
                 <p class="texto-info">Deja el campo vacío para borrar una calificación capturada por error. El promedio y el
                     estado se calculan solos en cuanto los tres parciales tienen valor.</p>
 
+                <% if (soloLectura) { %>
+                <div class="mensaje-exito mt-3">Este periodo está cerrado o inactivo. Las calificaciones se muestran en modo consulta.</div>
+                <% } else { %>
                 <button type="submit" class="btn btn-primary-formal">
                     <i class="bi bi-save me-1"></i>Guardar calificaciones del parcial <%= parcialActivo%>
                 </button>
+                <% } %>
             </form>
             <% } %>
 

@@ -3,6 +3,7 @@
 <%@page import="java.util.ArrayList"%>
 <%
     ArrayList<NivelAcademico> niveles = (ArrayList<NivelAcademico>) request.getAttribute("niveles");
+    NivelAcademico nivelEditar = (NivelAcademico) request.getAttribute("nivelEditar");
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -32,6 +33,13 @@
             <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
             <% } %>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyNiveles">
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoNiveles">Buscar</label>
+                    <input type="text" id="filtroTextoNiveles" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre del nivel...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -40,21 +48,23 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyNiveles">
                         <% for (NivelAcademico nivel : niveles) { %>
-                        <tr>
+                        <tr data-fila-filtrable>
                             <td><%= nivel.getNombreNivel()%></td>
                             <td class="text-end">
+                                <a href="SNiveles?editar=<%= nivel.getIdNivel()%>" class="btn btn-sm btn-icon-formal" title="Editar nivel" aria-label="Editar nivel"><i class="bi bi-pencil-square"></i></a>
                                 <form method="post" action="SNiveles" class="d-inline">
                                     <input type="hidden" name="accion" value="Eliminar">
                                     <input type="hidden" name="idNivel" value="<%= nivel.getIdNivel()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar nivel" aria-label="Eliminar nivel"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con la búsqueda.</div>
             </div>
         </div>
 
@@ -63,18 +73,19 @@
                 <div class="modal-content">
                     <form method="post" action="SNiveles">
                         <div class="modal-header">
-                            <h5 class="modal-title">Nuevo nivel académico</h5>
+                            <h5 class="modal-title"><%= nivelEditar == null ? "Nuevo nivel académico" : "Editar nivel académico"%></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="accion" value="Agregar">
+                            <input type="hidden" name="accion" value="<%= nivelEditar == null ? "Agregar" : "Modificar"%>">
+                            <% if (nivelEditar != null) { %><input type="hidden" name="idNivel" value="<%= nivelEditar.getIdNivel()%>"><% } %>
                             <div class="mb-3">
                                 <label class="form-label">Nombre</label>
-                                <input type="text" name="tfNombreNivel" class="form-control" placeholder="Licenciatura" required>
+                                <input type="text" name="tfNombreNivel" class="form-control" placeholder="Licenciatura" value="<%= nivelEditar == null ? "" : nivelEditar.getNombreNivel()%>" required>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary-formal">Guardar</button>
+                            <button type="submit" class="btn btn-primary-formal"><%= nivelEditar == null ? "Guardar" : "Actualizar"%></button>
                         </div>
                     </form>
                 </div>
@@ -83,6 +94,9 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
+        <% if (nivelEditar != null) { %>
+        <script>new bootstrap.Modal(document.getElementById("modalNivel")).show();</script>
+        <% } %>
             </main>
     </div>
 </div>

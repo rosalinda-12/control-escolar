@@ -15,17 +15,10 @@ import servicio.ServicioDocente;
 import servicio.ServicioGrupo;
 import java.io.IOException;
 
-/**
- * Misma funcionalidad que /admin/SAsignaciones (asignar/quitar un
- * docente de una materia de grupo), pero para el Subdirector: se valida
- * el permiso "asignaciones.crear"/"asignaciones.editar" y, además, que
- * el grupo pertenezca a la carrera que tiene asignada. Si cualquiera de
- * las dos validaciones falla, se responde HTTP 403 (no basta con que el
- * botón esté oculto en la pantalla).
- */
 @WebServlet("/subdirector/SAsignaciones")
 public class ServletSubdirectorAsignaciones extends HttpServlet
 {
+    private static final String ATRIBUTO_ERROR_ASIGNACION = "errorAsignacion";
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
@@ -35,20 +28,15 @@ public class ServletSubdirectorAsignaciones extends HttpServlet
 
         int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
 
-        if (!autorizacion.autorizarOResponder403(respuesta, usuarioSesion, "asignaciones.ver"))
-        {
-            return;
-        }
-
         if (!autorizacion.autorizarCarreraOResponder403(respuesta, usuarioSesion, idGrupo))
         {
             return;
         }
 
-        if (sesion.getAttribute("errorAsignacion") != null)
+        if (sesion.getAttribute(ATRIBUTO_ERROR_ASIGNACION) != null)
         {
-            solicitud.setAttribute("error", sesion.getAttribute("errorAsignacion"));
-            sesion.removeAttribute("errorAsignacion");
+            solicitud.setAttribute("error", sesion.getAttribute(ATRIBUTO_ERROR_ASIGNACION));
+            sesion.removeAttribute(ATRIBUTO_ERROR_ASIGNACION);
         }
 
         solicitud.setAttribute("grupo", new ServicioGrupo().buscarPorId(idGrupo));
@@ -65,37 +53,29 @@ public class ServletSubdirectorAsignaciones extends HttpServlet
         HttpSession sesion = solicitud.getSession(false);
         Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
         ServicioAutorizacion autorizacion = new ServicioAutorizacion();
-
         String accion = solicitud.getParameter("accion");
         int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
+        String permiso = "Desactivar".equals(accion) ? "asignaciones.editar" : "asignaciones.crear";
 
-        String clavePermiso = "Quitar".equals(accion) ? "asignaciones.editar" : "asignaciones.crear";
-
-        if (!autorizacion.autorizarOResponder403(respuesta, usuarioSesion, clavePermiso))
+        if (!autorizacion.autorizarOResponder403(respuesta, usuarioSesion, permiso)
+                || !autorizacion.autorizarCarreraOResponder403(respuesta, usuarioSesion, idGrupo))
         {
             return;
         }
 
-        if (!autorizacion.autorizarCarreraOResponder403(respuesta, usuarioSesion, idGrupo))
+        ServicioAsignacionDocente servicio = new ServicioAsignacionDocente();
+        if ("Desactivar".equals(accion))
         {
-            return;
-        }
-
-        ServicioAsignacionDocente servicioAsignacion = new ServicioAsignacionDocente();
-
-        if ("Quitar".equals(accion))
-        {
-            servicioAsignacion.quitar(Integer.parseInt(solicitud.getParameter("idGrupoMateria")), usuarioSesion);
+            servicio.desactivar(Integer.parseInt(solicitud.getParameter("idGrupoMateria")), usuarioSesion);
         }
         else
         {
-            int idGrupoMateria = Integer.parseInt(solicitud.getParameter("idGrupoMateria"));
-            int idDocente = Integer.parseInt(solicitud.getParameter("selDocente"));
-            ResultadoSimple resultado = servicioAsignacion.asignar(idDocente, idGrupoMateria, usuarioSesion);
-
+            ResultadoSimple resultado = servicio.asignar(
+                    Integer.parseInt(solicitud.getParameter("selDocente")),
+                    Integer.parseInt(solicitud.getParameter("idGrupoMateria")), usuarioSesion);
             if (!resultado.isExito())
             {
-                sesion.setAttribute("errorAsignacion", resultado.getMensajeError());
+                sesion.setAttribute(ATRIBUTO_ERROR_ASIGNACION, resultado.getMensajeError());
             }
         }
 

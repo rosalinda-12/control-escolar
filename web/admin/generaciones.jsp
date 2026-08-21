@@ -26,6 +26,21 @@
                 </button>
             </div>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyGeneraciones">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusGeneraciones">Estatus</label>
+                    <select id="filtroEstatusGeneraciones" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="Activa" selected>Activas (actuales)</option>
+                        <option value="">Todas</option>
+                        <option value="Egresada">Egresadas</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoGeneraciones">Buscar</label>
+                    <input type="text" id="filtroTextoGeneraciones" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -35,9 +50,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyGeneraciones">
                         <% for (Generacion generacion : generaciones) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= generacion.getEstatus()%>">
                             <td><%= generacion.getNombreGeneracion()%></td>
                             <td>
                                 <span class="badge-estatus <%= "Activa".equals(generacion.getEstatus()) ? "badge-aprobado" : "badge-pendiente"%>">
@@ -45,17 +60,18 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a href="SGeneraciones?editar=<%= generacion.getIdGeneracion()%>" class="btn btn-sm btn-outline-formal">Editar</a>
+                                <a href="SGeneraciones?editar=<%= generacion.getIdGeneracion()%>" class="btn btn-sm btn-icon-formal" title="Editar generación" aria-label="Editar generación"><i class="bi bi-pencil-square"></i></a>
                                 <form method="post" action="SGeneraciones" class="d-inline">
                                     <input type="hidden" name="accion" value="Eliminar">
                                     <input type="hidden" name="idGeneracion" value="<%= generacion.getIdGeneracion()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar generación" aria-label="Eliminar generación"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
         </div>
 

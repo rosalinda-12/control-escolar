@@ -1,9 +1,7 @@
 package servicio;
 
-/**
- * Resultado genérico para operaciones de alta/modificación en los servicios
- * del módulo académico. Evita repetir la misma clase interna en cada servicio.
- */
+
+
 public class ResultadoSimple
 {
     private final boolean exito;

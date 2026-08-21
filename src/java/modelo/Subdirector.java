@@ -1,5 +1,8 @@
 package modelo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Subdirector
 {
     private int idSubdirector;
@@ -11,6 +14,8 @@ public class Subdirector
     private int idCarrera;
     private String nombreCarrera;
     private String estatus;
+    private List<Integer> idsCarrera = new ArrayList<>();
+    private List<String> nombresCarrera = new ArrayList<>();
 
     public int getIdSubdirector()
     {
@@ -80,6 +85,7 @@ public class Subdirector
     public void setIdCarrera(int idCarrera)
     {
         this.idCarrera = idCarrera;
+        if (!idsCarrera.contains(idCarrera)) idsCarrera.add(idCarrera);
     }
 
     public String getNombreCarrera()
@@ -91,6 +97,15 @@ public class Subdirector
     {
         this.nombreCarrera = nombreCarrera;
     }
+
+    public List<Integer> getIdsCarrera()
+    { return idsCarrera; }
+    public void setIdsCarrera(List<Integer> idsCarrera)
+    { this.idsCarrera = idsCarrera == null ? new ArrayList<>() : new ArrayList<>(idsCarrera); }
+    public List<String> getNombresCarrera()
+    { return nombresCarrera; }
+    public void setNombresCarrera(List<String> nombresCarrera)
+    { this.nombresCarrera = nombresCarrera == null ? new ArrayList<>() : new ArrayList<>(nombresCarrera); }
 
     public String getEstatus()
     {

@@ -9,11 +9,8 @@ import servicio.ServicioCurriculo;
 import servicio.ServicioPlanEstudio;
 import java.io.IOException;
 
-/**
- * Ahora es una vista de solo lectura: las materias quedan ligadas a su
- * cuatrimestre desde que se dan de alta en Materias, así que aquí ya no hay
- * acciones de "asignar" o "quitar", solo el mapa curricular resultante.
- */
+
+
 @WebServlet("/admin/SCurriculo")
 public class ServletCurriculo extends HttpServlet
 {

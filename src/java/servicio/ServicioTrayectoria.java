@@ -1,20 +1,32 @@
 package servicio;
 
 import doa.DAOTrayectoriaAcademica;
+import modelo.Alumno;
 import modelo.TrayectoriaAcademica;
 import modelo.Usuario;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
+import util.EmailUtil;
 
 public class ServicioTrayectoria
 {
     private final DAOTrayectoriaAcademica daoTrayectoria;
+    private final ServicioAlumno servicioAlumno;
     private final ServicioBitacora servicioBitacora;
 
     public ServicioTrayectoria()
     {
         this.daoTrayectoria = new DAOTrayectoriaAcademica();
+        this.servicioAlumno = new ServicioAlumno();
         this.servicioBitacora = new ServicioBitacora();
+    }
+
+
+
+    public ArrayList<TrayectoriaAcademica> listar()
+    {
+        return daoTrayectoria.listar();
     }
 
     public ArrayList<TrayectoriaAcademica> listarPorAlumno(int idAlumno)
@@ -32,22 +44,76 @@ public class ServicioTrayectoria
         return daoTrayectoria.buscarPorMatricula(matricula);
     }
 
-    /**
-     * Crea una nueva trayectoria para el alumno. Si se indica una trayectoria
-     * anterior (por ejemplo, viene de TSU y ahora continúa en Ingeniería, o
-     * cambió de carrera), esa trayectoria previa se cierra automáticamente
-     * con estado CAMBIO, pero su historial de inscripciones y calificaciones
-     * no se toca.
-     *
-     * Regla de avance de nivel: solo se permite encadenar una trayectoria
-     * anterior si esta sigue ACTIVA y el alumno ya aprobó todas las materias
-     * activas de esa trayectoria (por ejemplo, terminó todo TSU antes de
-     * pasar a Licenciatura/Ingeniería). La base de datos aplica la misma
-     * regla como red de seguridad (trigger trg_trayectoria_valida_avance),
-     * por si algún día se inserta directamente en la BD sin pasar por aquí.
-     */
+    public TrayectoriaAcademica buscarPorTexto(String busqueda)
+    {
+        return daoTrayectoria.buscarPorTexto(busqueda);
+    }
+
+    public String obtenerAvisoSiguienteNivel(int idTrayectoria)
+    {
+        if (daoTrayectoria.contarMateriasPendientes(idTrayectoria) > 0)
+        {
+            return null;
+        }
+
+        String siguienteNivel = daoTrayectoria.obtenerSiguienteNivel(idTrayectoria);
+        return siguienteNivel == null ? null : "Nivel concluido. El alumno puede continuar con " + siguienteNivel + ".";
+    }
+
+    public String sugerirMatricula(int idPlan)
+    {
+        return daoTrayectoria.sugerirMatricula(idPlan);
+    }
+
+    public ArrayList<TrayectoriaAcademica> listarListasParaAvance()
+    {
+        ArrayList<TrayectoriaAcademica> listas = new ArrayList<>();
+        for (TrayectoriaAcademica trayectoria : daoTrayectoria.listar())
+        {
+            if ("ACTIVA".equals(trayectoria.getEstado())
+                    && daoTrayectoria.contarMateriasPendientes(trayectoria.getIdTrayectoria()) == 0
+                    && daoTrayectoria.tieneSiguienteNivel(trayectoria.getIdPlan()))
+            {
+                listas.add(trayectoria);
+            }
+        }
+        return listas;
+    }
+
+    public ResultadoSimple avanzarEnLote(List<Integer> idsTrayectoria, Usuario responsable)
+    {
+        int creadas = 0;
+        for (Integer idTrayectoria : idsTrayectoria)
+        {
+            TrayectoriaAcademica anterior = daoTrayectoria.buscarPorId(idTrayectoria);
+            if (anterior == null || !"ACTIVA".equals(anterior.getEstado())
+                    || daoTrayectoria.contarMateriasPendientes(idTrayectoria) > 0
+                    || !daoTrayectoria.tieneSiguienteNivel(anterior.getIdPlan())) continue;
+
+            TrayectoriaAcademica siguiente = new TrayectoriaAcademica();
+            siguiente.setIdAlumno(anterior.getIdAlumno());
+            siguiente.setIdPlan(anterior.getIdPlan());
+            String matriculaBase = anterior.getMatricula().split("_")[0];
+            siguiente.setMatricula(matriculaBase + "_i");
+            siguiente.setIdTrayectoriaAnterior(anterior.getIdTrayectoria());
+            ResultadoSimple resultado = agregar(siguiente, responsable);
+            if (resultado.isExito()) creadas++;
+        }
+        return ResultadoSimple.exito(creadas);
+    }
+
+
+
     public ResultadoSimple agregar(TrayectoriaAcademica trayectoria, Usuario responsable)
     {
+        Alumno alumno = servicioAlumno.buscarPorId(trayectoria.getIdAlumno());
+
+        if (alumno != null && "BajaDefinitiva".equals(alumno.getEstatus()))
+        {
+            return ResultadoSimple.fallo("Este alumno tiene baja definitiva; ya no puede registrar nuevas trayectorias. "
+                    + "Si fue un error, primero revierte su baja definitiva.");
+        }
+
         if (daoTrayectoria.existeMatricula(trayectoria.getMatricula()))
         {
             return ResultadoSimple.fallo("Ya existe una trayectoria con esa matrícula.");
@@ -90,10 +156,13 @@ public class ServicioTrayectoria
         return ResultadoSimple.exito(idTrayectoria);
     }
 
-    public void pausar(int idTrayectoria, Usuario responsable)
+
+
+    public void bajaTemporal(int idTrayectoria, Usuario responsable)
     {
-        daoTrayectoria.actualizarEstado(idTrayectoria, "PAUSADA", false);
-        servicioBitacora.registrarBaja(responsable, "trayectorias_academicas", idTrayectoria, "Pausó la trayectoria");
+        daoTrayectoria.actualizarEstado(idTrayectoria, "BAJA_TEMPORAL", false);
+        notificarCambioEstado(idTrayectoria, "Baja temporal");
+        servicioBitacora.registrarBaja(responsable, "trayectorias_academicas", idTrayectoria, "Dio de baja temporal la trayectoria");
     }
 
     public void reanudar(int idTrayectoria, Usuario responsable)
@@ -102,9 +171,37 @@ public class ServicioTrayectoria
         servicioBitacora.registrarAlta(responsable, "trayectorias_academicas", idTrayectoria, "Reanudó la trayectoria");
     }
 
-    public void cerrar(int idTrayectoria, Usuario responsable)
+
+
+    public void bajaDefinitiva(int idTrayectoria, Usuario responsable)
     {
-        daoTrayectoria.actualizarEstado(idTrayectoria, "CERRADA", true);
-        servicioBitacora.registrarBaja(responsable, "trayectorias_academicas", idTrayectoria, "Cerró la trayectoria");
+        daoTrayectoria.actualizarEstado(idTrayectoria, "BAJA_DEFINITIVA", true);
+        notificarCambioEstado(idTrayectoria, "Baja definitiva");
+        servicioBitacora.registrarBaja(responsable, "trayectorias_academicas", idTrayectoria,
+                "Dio de baja definitiva la trayectoria; ya no podrá inscribirse en ella");
+    }
+
+
+
+    public void revertirBajaDefinitiva(int idTrayectoria, Usuario responsable)
+    {
+        TrayectoriaAcademica trayectoria = daoTrayectoria.buscarPorId(idTrayectoria);
+
+        if (trayectoria == null || !"BAJA_DEFINITIVA".equals(trayectoria.getEstado()))
+        {
+            return;
+        }
+
+        daoTrayectoria.revertirAActiva(idTrayectoria);
+        servicioBitacora.registrarAlta(responsable, "trayectorias_academicas", idTrayectoria,
+                "Revirtió la baja definitiva de la trayectoria (corrección de error)");
+    }
+
+    private void notificarCambioEstado(int idTrayectoria, String estado)
+    {
+        TrayectoriaAcademica trayectoria = daoTrayectoria.buscarPorId(idTrayectoria);
+        if (trayectoria == null) return;
+        Alumno alumno = servicioAlumno.buscarPorId(trayectoria.getIdAlumno());
+        if (alumno != null) EmailUtil.enviarCambioTrayectoria(alumno.getCorreo(), alumno.getNombreCompleto(), estado);
     }
 }

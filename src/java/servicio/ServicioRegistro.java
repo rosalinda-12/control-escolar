@@ -73,12 +73,8 @@ public class ServicioRegistro
         return ResultadoRegistro.exito(idUsuario);
     }
 
-    /**
-     * La matrícula ahora vive en la trayectoria académica (un alumno puede
-     * tener varias a lo largo del tiempo: TSU, Ingeniería, etc.), así que el
-     * registro busca la trayectoria por matrícula y valida que el correo
-     * coincida con el de esa persona antes de crear la cuenta.
-     */
+
+
     public ResultadoRegistro registrarAlumno(String matricula, String correo, String contrasenaPlana)
     {
         TrayectoriaAcademica trayectoria = daoTrayectoria.buscarPorMatricula(matricula);
@@ -158,13 +154,8 @@ public class ServicioRegistro
         return ResultadoRegistro.exito(idUsuario);
     }
 
-    /**
-     * El Subdirector, igual que el Alumno y el Maestro, primero es dado
-     * de alta por el Admin/Control Escolar (correo + carrera, en
-     * ServicioSubdirector) y luego se autoregistra aquí con ese mismo
-     * correo. Ya no existe el alta directa de cuenta con contraseña
-     * temporal.
-     */
+
+
     public ResultadoRegistro registrarSubdirector(String correo, String contrasenaPlana)
     {
         Subdirector subdirector = daoSubdirector.buscarPorCorreo(correo);

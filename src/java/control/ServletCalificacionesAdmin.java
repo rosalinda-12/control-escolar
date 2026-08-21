@@ -12,18 +12,6 @@ import servicio.ServicioCalificacion;
 import servicio.ServicioCarrera;
 import java.io.IOException;
 
-/**
- * Pantalla de calificaciones para Administrador y Control Escolar.
- *
- * Alcance (regla de negocio):
- *   - Administrador: puede ver, editar y eliminar calificaciones de
- *     TODAS las carreras (calificaciones.ver / .editar / .eliminar).
- *   - Control Escolar: puede ver y editar calificaciones de TODAS las
- *     carreras, pero NO puede eliminarlas (sin calificaciones.eliminar).
- *
- * El Subdirector tiene su propia pantalla de solo lectura, limitada a su
- * carrera asignada, en ServletSubdirectorCalificaciones.
- */
 @WebServlet("/admin/SCalificaciones")
 public class ServletCalificacionesAdmin extends HttpServlet
 {

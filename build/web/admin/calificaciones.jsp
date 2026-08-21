@@ -48,7 +48,34 @@
             <% if (calificaciones.isEmpty()) { %>
             <div class="mensaje-exito mt-4">No hay calificaciones registradas para este filtro.</div>
             <% } else { %>
-            <div class="tabla-formal-wrap mt-4">
+            <div class="barra-filtros" data-filtros-tabla="#tbodyCalificaciones">
+                <div class="campo-filtro">
+                    <label for="filtroEstadoCalif">Estado</label>
+                    <select id="filtroEstadoCalif" class="form-select form-select-sm" data-filtro-campo="estado">
+                        <option value="Cursando" selected>Cursando (actuales)</option>
+                        <option value="">Todos</option>
+                        <option value="Aprobada">Aprobadas</option>
+                        <option value="Reprobada">Reprobadas</option>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroGrupoCalif">Grupo</label>
+                    <select id="filtroGrupoCalif" class="form-select form-select-sm" data-filtro-campo="grupo">
+                        <option value="" selected>Todos</option>
+                        <% java.util.LinkedHashSet<String> gruposCalif = new java.util.LinkedHashSet<String>();
+                           for (Calificacion c : calificaciones) { gruposCalif.add(c.getNombreGrupo()); }
+                           for (String nombreGrupo : gruposCalif) { %>
+                        <option value="<%= nombreGrupo%>"><%= nombreGrupo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoCalif">Buscar</label>
+                    <input type="text" id="filtroTextoCalif" class="form-control form-control-sm" data-filtro-texto placeholder="Matrícula, alumno, materia...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
+            <div class="tabla-formal-wrap mt-3">
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
@@ -66,9 +93,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyCalificaciones">
                         <% for (Calificacion calificacion : calificaciones) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estado="<%= calificacion.getEstadoMateria()%>" data-grupo="<%= calificacion.getNombreGrupo()%>">
                             <td><%= calificacion.getMatricula()%></td>
                             <td><%= calificacion.getNombreAlumno()%></td>
                             <td><%= calificacion.getNombreCarrera()%></td>
@@ -90,8 +117,8 @@
                             </td>
                             <td class="text-end text-nowrap">
                                 <% if (Boolean.TRUE.equals(puedeEditar)) { %>
-                                <a class="btn btn-sm btn-outline-formal"
-                                   href="SCalificaciones?editar=<%= calificacion.getIdInscripcionMateria()%><%= idCarreraSeleccionada != null ? "&idCarrera=" + idCarreraSeleccionada : ""%>">Editar</a>
+                                          <a class="btn btn-sm btn-icon-formal" title="Editar calificación" aria-label="Editar calificación"
+                                              href="SCalificaciones?editar=<%= calificacion.getIdInscripcionMateria()%><%= idCarreraSeleccionada != null ? "&idCarrera=" + idCarreraSeleccionada : ""%>"><i class="bi bi-pencil-square"></i></a>
                                 <% } %>
                                 <% if (Boolean.TRUE.equals(puedeEliminar)) { %>
                                 <form method="post" action="SCalificaciones" class="d-inline"
@@ -101,7 +128,7 @@
                                     <% if (idCarreraSeleccionada != null) { %>
                                     <input type="hidden" name="idCarrera" value="<%= idCarreraSeleccionada%>">
                                     <% } %>
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar calificación" aria-label="Eliminar calificación"><i class="bi bi-trash3"></i></button>
                                 </form>
                                 <% } %>
                             </td>
@@ -109,6 +136,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>
@@ -128,6 +156,17 @@
                             <% if (idCarreraSeleccionada != null) { %>
                             <input type="hidden" name="idCarrera" value="<%= idCarreraSeleccionada%>">
                             <% } %>
+                            <div class="calificacion-alumno-card">
+                                <div class="calificacion-alumno-nombre"><%= calificacionEditar.getNombreAlumno()%></div>
+                                <div class="row g-2 small">
+                                    <div class="col-6"><strong>Matrícula:</strong> <%= calificacionEditar.getMatricula()%></div>
+                                    <div class="col-6"><strong>Carrera:</strong> <%= calificacionEditar.getNombreCarrera()%></div>
+                                    <div class="col-6"><strong>Materia:</strong> <%= calificacionEditar.getNombreMateria()%></div>
+                                    <div class="col-6"><strong>Grupo:</strong> <%= calificacionEditar.getNombreGrupo()%></div>
+                                    <div class="col-6"><strong>Cuatrimestre:</strong> <%= calificacionEditar.getNumeroCuatrimestre()%></div>
+                                    <div class="col-6"><strong>Estado:</strong> <%= calificacionEditar.getEstadoMateria()%></div>
+                                </div>
+                            </div>
                             <p class="texto-info">Deja un campo vacío para borrar ese parcial. El promedio y el estado (Aprobada/Reprobada) se recalculan solos.</p>
                             <div class="row">
                                 <div class="col-4 mb-3">

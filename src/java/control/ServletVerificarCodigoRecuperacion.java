@@ -48,9 +48,7 @@ public class ServletVerificarCodigoRecuperacion extends HttpServlet
             return;
         }
 
-        // Marca en sesión que este usuario ya pasó la verificación del
-        // código, para que SNuevaContrasena no se pueda abrir directamente
-        // sin haber capturado un código válido primero.
+
         HttpSession sesion = solicitud.getSession(true);
         sesion.setAttribute("idUsuarioRecuperacionVerificado", idUsuario);
 

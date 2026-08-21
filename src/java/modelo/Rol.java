@@ -37,11 +37,8 @@ public class Rol
         this.descripcion = descripcion;
     }
 
-    /**
-     * true únicamente para el rol "Administrador" original (columna
-     * roles.es_administrador_principal). Ese rol siempre tiene acceso
-     * total y no depende de la tabla rol_permisos.
-     */
+
+
     public boolean isEsAdministradorPrincipal()
     {
         return esAdministradorPrincipal;

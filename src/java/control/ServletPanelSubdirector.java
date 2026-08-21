@@ -7,8 +7,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import modelo.Usuario;
+import modelo.Carrera;
+import modelo.Grupo;
+import doa.DAOGrupo;
 import servicio.ServicioCarrera;
 import java.io.IOException;
+import java.util.ArrayList;
 
 @WebServlet("/subdirector/SPanel")
 public class ServletPanelSubdirector extends HttpServlet
@@ -19,10 +23,18 @@ public class ServletPanelSubdirector extends HttpServlet
         HttpSession sesion = solicitud.getSession(false);
         Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
 
-        if (usuarioSesion.getIdCarrera() != null)
+        ServicioCarrera servicioCarrera = new ServicioCarrera();
+        ArrayList<Carrera> carreras = new ArrayList<>();
+        for (Integer idCarrera : usuarioSesion.getIdsCarrera())
         {
-            solicitud.setAttribute("carrera", new ServicioCarrera().buscarPorId(usuarioSesion.getIdCarrera()));
+            Carrera carrera = servicioCarrera.buscarPorId(idCarrera);
+            if (carrera != null) carreras.add(carrera);
         }
+
+        ArrayList<Grupo> grupos = new DAOGrupo().listarPorCarreras(usuarioSesion.getIdsCarrera());
+        solicitud.setAttribute("carreras", carreras);
+        solicitud.setAttribute("grupos", grupos);
+        solicitud.setAttribute("carrera", carreras.isEmpty() ? null : carreras.get(0));
 
         solicitud.getServletContext().getRequestDispatcher("/subdirector/panel.jsp").forward(solicitud, respuesta);
     }

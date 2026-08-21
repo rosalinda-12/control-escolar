@@ -1,3 +1,4 @@
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Usuario"%>
 <%@page import="jakarta.servlet.RequestDispatcher"%>
 <%
@@ -13,7 +14,6 @@
 <div class="app-shell">
     <aside class="sidebar">
         <a class="sidebar-brand" href="<%= rutaBase %>/maestro/SPanel">
-            <span class="sidebar-brand-icon"><i class="bi bi-shield-check"></i></span>
             <span class="sidebar-brand-text">
                 <span>CONTROL ESCOLAR</span>
                 <span class="sidebar-brand-sub">Portal Docente</span>

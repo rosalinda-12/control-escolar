@@ -19,7 +19,12 @@ public class ServletCiclosEscolares extends HttpServlet
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
         ServicioCicloEscolar servicioCiclo = new ServicioCicloEscolar();
+        String idEditar = solicitud.getParameter("editar");
         solicitud.setAttribute("ciclos", servicioCiclo.listar());
+        if (idEditar != null && !idEditar.isEmpty())
+        {
+            solicitud.setAttribute("cicloEditar", servicioCiclo.buscarPorId(Integer.parseInt(idEditar)));
+        }
         solicitud.getServletContext().getRequestDispatcher("/admin/ciclos.jsp").forward(solicitud, respuesta);
     }
 
@@ -34,6 +39,24 @@ public class ServletCiclosEscolares extends HttpServlet
         if ("Eliminar".equals(accion))
         {
             servicioCiclo.eliminar(Integer.parseInt(solicitud.getParameter("idCiclo")), responsable);
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SCiclos");
+            return;
+        }
+
+        if ("Modificar".equals(accion))
+        {
+            CicloEscolar ciclo = new CicloEscolar();
+            ciclo.setIdCiclo(Integer.parseInt(solicitud.getParameter("idCiclo")));
+            ciclo.setNombreCiclo(solicitud.getParameter("tfNombreCiclo"));
+            ResultadoSimple resultado = servicioCiclo.actualizar(ciclo, responsable);
+            if (!resultado.isExito())
+            {
+                solicitud.setAttribute("error", resultado.getMensajeError());
+                solicitud.setAttribute("ciclos", servicioCiclo.listar());
+                solicitud.setAttribute("cicloEditar", ciclo);
+                solicitud.getServletContext().getRequestDispatcher("/admin/ciclos.jsp").forward(solicitud, respuesta);
+                return;
+            }
             respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SCiclos");
             return;
         }

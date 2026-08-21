@@ -39,11 +39,8 @@ public class ServicioMateria
         return daoMateria.buscarPorId(idMateria);
     }
 
-    /**
-     * Da de alta la materia ya ligada a un cuatrimestre concreto de un plan.
-     * Ya no es un catálogo reutilizable: si la misma materia se imparte en
-     * otro cuatrimestre o carrera, se debe dar de alta de nuevo ahí.
-     */
+
+
     public ResultadoSimple agregar(Materia materia, Usuario responsable)
     {
         if (materia.getIdPlanCuatrimestre() <= 0)
@@ -63,10 +60,8 @@ public class ServicioMateria
         return ResultadoSimple.exito(idMateria);
     }
 
-    /**
-     * Solo nombre y estatus se pueden modificar; el cuatrimestre/plan al que
-     * quedó ligada la materia se fijó desde el alta.
-     */
+
+
     public ResultadoSimple modificar(Materia materia, Usuario responsable)
     {
         Materia existente = daoMateria.buscarPorId(materia.getIdMateria());
@@ -89,11 +84,44 @@ public class ServicioMateria
         return ResultadoSimple.exito(materia.getIdMateria());
     }
 
-    /**
-     * Si la materia ya se copió a algún grupo (es decir, ya se está
-     * impartiendo) no se puede eliminar sin afectar ese historial, así que
-     * se desactiva en su lugar.
-     */
+
+
+    public ResultadoSimple actualizarPdf(int idMateria, String nombreArchivo, Usuario responsable)
+    {
+        Materia existente = daoMateria.buscarPorId(idMateria);
+
+        if (existente == null)
+        {
+            return ResultadoSimple.fallo("La materia ya no existe.");
+        }
+
+        daoMateria.actualizarPdf(idMateria, nombreArchivo);
+        servicioBitacora.registrarAlta(responsable, "materias", idMateria,
+                "Subió el temario en PDF de la materia " + existente.getNombreMateria());
+
+        return ResultadoSimple.exito(idMateria);
+    }
+
+
+
+    public ResultadoSimple quitarPdf(int idMateria, Usuario responsable)
+    {
+        Materia existente = daoMateria.buscarPorId(idMateria);
+
+        if (existente == null)
+        {
+            return ResultadoSimple.fallo("La materia ya no existe.");
+        }
+
+        daoMateria.actualizarPdf(idMateria, null);
+        servicioBitacora.registrarBaja(responsable, "materias", idMateria,
+                "Quitó el temario en PDF de la materia " + existente.getNombreMateria());
+
+        return ResultadoSimple.exito(idMateria);
+    }
+
+
+
     public ResultadoDesactivable eliminarODesactivar(int idMateria, Usuario responsable)
     {
         Materia materia = daoMateria.buscarPorId(idMateria);

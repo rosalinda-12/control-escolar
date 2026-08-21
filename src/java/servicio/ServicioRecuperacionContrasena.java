@@ -7,12 +7,8 @@ import util.EmailUtil;
 import util.PasswordUtil;
 import java.time.LocalDateTime;
 
-/**
- * Flujo de "olvidé mi contraseña": el alumno (o cualquier usuario) pide un
- * código de verificación a su correo, lo captura, y con eso puede definir
- * una contraseña nueva. Reutiliza el mismo mecanismo de código de un solo
- * uso que ya existe para verificar el correo en el registro.
- */
+
+
 public class ServicioRecuperacionContrasena
 {
     private final DAOUsuario daoUsuario;
@@ -22,10 +18,8 @@ public class ServicioRecuperacionContrasena
         this.daoUsuario = new DAOUsuario();
     }
 
-    /**
-     * Genera un código nuevo y lo envía al correo capturado, si existe una
-     * cuenta aprobada y verificada con ese correo.
-     */
+
+
     public ResultadoSolicitud solicitarCodigo(String correo)
     {
         Usuario usuario = daoUsuario.buscarPorCorreo(correo);
@@ -49,10 +43,8 @@ public class ServicioRecuperacionContrasena
         return ResultadoSolicitud.exito(usuario.getIdUsuario());
     }
 
-    /**
-     * Vuelve a generar y enviar el código, para el botón "Reenviar código"
-     * de la pantalla de verificación.
-     */
+
+
     public void reenviarCodigo(int idUsuario)
     {
         Usuario usuario = daoUsuario.buscarPorId(idUsuario);
@@ -74,11 +66,8 @@ public class ServicioRecuperacionContrasena
         EmailUtil.enviarCodigoRecuperacion(usuario.getCorreo(), usuario.getNombres(), codigoNuevo);
     }
 
-    /**
-     * Confirma que el código capturado sea el correcto y no haya vencido.
-     * No borra el código todavía: eso se hace hasta que la contraseña
-     * nueva se guarda con éxito en {@link #restablecerContrasena}.
-     */
+
+
     public ResultadoVerificacion verificarCodigo(int idUsuario, String codigoCapturado)
     {
         Usuario usuario = daoUsuario.buscarPorId(idUsuario);
@@ -101,10 +90,8 @@ public class ServicioRecuperacionContrasena
         return ResultadoVerificacion.exito();
     }
 
-    /**
-     * Guarda la contraseña nueva y anula el código para que no se pueda
-     * volver a usar.
-     */
+
+
     public ResultadoSimple restablecerContrasena(int idUsuario, String contrasenaNueva)
     {
         if (contrasenaNueva == null || contrasenaNueva.length() < 8)

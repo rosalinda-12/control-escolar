@@ -51,10 +51,34 @@ public class ServicioDocente
         return ResultadoSimple.exito(idDocente);
     }
 
-    /**
-     * Un docente con asignaciones (grupos-materia impartidos) no se elimina;
-     * se desactiva para conservar el historial de qué grupo impartió.
-     */
+    public ResultadoSimple actualizar(Docente docente, Usuario responsable)
+    {
+        Docente anterior = daoDocente.buscarPorId(docente.getIdDocente());
+        if (anterior == null)
+        {
+            return ResultadoSimple.fallo("El docente ya no existe.");
+        }
+        if (!anterior.getCorreo().equalsIgnoreCase(docente.getCorreo()))
+        {
+            Docente conCorreo = daoDocente.buscarPorCorreo(docente.getCorreo());
+            if (conCorreo != null && conCorreo.getIdDocente() != docente.getIdDocente())
+            {
+                return ResultadoSimple.fallo("Ya existe otro docente con ese correo.");
+            }
+        }
+        Persona persona = new Persona();
+        persona.setIdPersona(docente.getIdPersona());
+        persona.setNombres(docente.getNombres());
+        persona.setApellidoPaterno(docente.getApellidoPaterno());
+        persona.setApellidoMaterno(docente.getApellidoMaterno());
+        persona.setCorreo(docente.getCorreo());
+        daoPersona.modificar(persona);
+        servicioBitacora.registrarAlta(responsable, "docentes", docente.getIdDocente(), "Actualizó datos del docente " + docente.getNombreCompleto());
+        return ResultadoSimple.exito(docente.getIdDocente());
+    }
+
+
+
     public ResultadoDesactivable desactivar(int idDocente, Usuario responsable)
     {
         Docente docente = daoDocente.buscarPorId(idDocente);

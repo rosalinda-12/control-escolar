@@ -21,24 +21,14 @@ public class ServletInscripciones extends HttpServlet
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
         ServicioInscripcion servicioInscripcion = new ServicioInscripcion();
-        String matricula = solicitud.getParameter("matricula");
-        boolean verTodas = "1".equals(solicitud.getParameter("todas"));
+        String busquedaAlumno = solicitud.getParameter("busqueda");
+        if (busquedaAlumno == null || busquedaAlumno.trim().isEmpty())
+        {
+            busquedaAlumno = solicitud.getParameter("matricula");
+        }
+        solicitud.setAttribute("inscripciones", servicioInscripcion.listar());
 
-        if (matricula != null && !matricula.isEmpty())
-        {
-            solicitud.setAttribute("inscripciones", servicioInscripcion.listarPorMatricula(matricula));
-        }
-        else if (verTodas)
-        {
-            solicitud.setAttribute("inscripciones", servicioInscripcion.listar());
-            solicitud.setAttribute("verTodas", true);
-        }
-        else
-        {
-            solicitud.setAttribute("inscripciones", servicioInscripcion.listarActivas());
-        }
-
-        solicitud.setAttribute("grupos", new ServicioGrupo().listar());
+        solicitud.setAttribute("grupos", new ServicioGrupo().listarActivosParaInscripcion());
 
         HttpSession sesion = solicitud.getSession(false);
         if (sesion != null && sesion.getAttribute("errorInscripcion") != null)
@@ -47,15 +37,20 @@ public class ServletInscripciones extends HttpServlet
             sesion.removeAttribute("errorInscripcion");
         }
 
-        if (matricula != null && !matricula.isEmpty())
+        if (busquedaAlumno != null && !busquedaAlumno.trim().isEmpty())
         {
-            TrayectoriaAcademica trayectoria = new ServicioTrayectoria().buscarPorMatricula(matricula);
+            ServicioTrayectoria servicioTrayectoria = new ServicioTrayectoria();
+            TrayectoriaAcademica trayectoria = servicioTrayectoria.buscarPorTexto(busquedaAlumno.trim());
             solicitud.setAttribute("trayectoriaEncontrada", trayectoria);
-            solicitud.setAttribute("matriculaBuscada", matricula);
+            solicitud.setAttribute("matriculaBuscada", busquedaAlumno.trim());
 
             if (trayectoria == null)
             {
-                solicitud.setAttribute("error", "No se encontró ninguna trayectoria con esa matrícula.");
+                solicitud.setAttribute("error", "No se encontró ningún alumno con esa matrícula, nombre o carrera.");
+            }
+            else if ("ACTIVA".equals(trayectoria.getEstado()))
+            {
+                solicitud.setAttribute("avanceNivel", servicioTrayectoria.obtenerAvisoSiguienteNivel(trayectoria.getIdTrayectoria()));
             }
         }
 
@@ -77,9 +72,36 @@ public class ServletInscripciones extends HttpServlet
             return;
         }
 
-        int idTrayectoria = Integer.parseInt(solicitud.getParameter("idTrayectoria"));
-        int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
-        int idPeriodo = new ServicioGrupo().buscarPorId(idGrupo).getIdPeriodo();
+        String idTrayectoriaTexto = solicitud.getParameter("idTrayectoria");
+        String idGrupoTexto = solicitud.getParameter("idGrupo");
+        if (idTrayectoriaTexto == null || idGrupoTexto == null || idGrupoTexto.trim().isEmpty())
+        {
+            solicitud.getSession().setAttribute("errorInscripcion", "Selecciona un grupo disponible antes de confirmar la inscripción.");
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SInscripciones");
+            return;
+        }
+
+        int idTrayectoria;
+        int idGrupo;
+        try
+        {
+            idTrayectoria = Integer.parseInt(idTrayectoriaTexto);
+            idGrupo = Integer.parseInt(idGrupoTexto);
+        }
+        catch (NumberFormatException excepcion)
+        {
+            solicitud.getSession().setAttribute("errorInscripcion", "La selección de inscripción no es válida.");
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SInscripciones");
+            return;
+        }
+        modelo.Grupo grupoSeleccionado = new ServicioGrupo().buscarPorId(idGrupo);
+        if (grupoSeleccionado == null || !"Activo".equals(grupoSeleccionado.getEstatus()))
+        {
+            solicitud.getSession().setAttribute("errorInscripcion", "El grupo seleccionado ya no está disponible.");
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SInscripciones");
+            return;
+        }
+        int idPeriodo = grupoSeleccionado.getIdPeriodo();
 
         ResultadoSimple resultado = servicioInscripcion.inscribir(idTrayectoria, idGrupo, idPeriodo, responsable);
 

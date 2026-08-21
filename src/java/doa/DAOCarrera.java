@@ -11,10 +11,19 @@ import java.util.ArrayList;
 
 public class DAOCarrera
 {
+
+
+    private static final String SUBCONSULTA_NIVELES =
+            "(SELECT GROUP_CONCAT(DISTINCT n.nombre_nivel ORDER BY pn.cuatrimestre_inicio SEPARATOR ', ') "
+            + "FROM planes_estudio p JOIN plan_niveles pn ON pn.id_plan = p.id_plan "
+            + "JOIN niveles_academicos n ON n.id_nivel = pn.id_nivel "
+            + "WHERE p.id_carrera = c.id_carrera AND p.estatus = 'Vigente') AS niveles";
+
     public ArrayList<Carrera> listar()
     {
         ArrayList<Carrera> lista = new ArrayList<>();
-        String sql = "SELECT id_carrera, nombre_carrera, clave_carrera, estatus FROM carreras ORDER BY nombre_carrera";
+        String sql = "SELECT c.id_carrera, c.nombre_carrera, c.clave_carrera, c.estatus, " + SUBCONSULTA_NIVELES
+                + " FROM carreras c ORDER BY c.nombre_carrera";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql);
@@ -36,7 +45,8 @@ public class DAOCarrera
     public ArrayList<Carrera> listarActivas()
     {
         ArrayList<Carrera> lista = new ArrayList<>();
-        String sql = "SELECT id_carrera, nombre_carrera, clave_carrera, estatus FROM carreras WHERE estatus = 'Activa' ORDER BY nombre_carrera";
+        String sql = "SELECT c.id_carrera, c.nombre_carrera, c.clave_carrera, c.estatus, " + SUBCONSULTA_NIVELES
+                + " FROM carreras c WHERE c.estatus = 'Activa' ORDER BY c.nombre_carrera";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql);
@@ -57,7 +67,8 @@ public class DAOCarrera
 
     public Carrera buscarPorId(int idCarrera)
     {
-        String sql = "SELECT id_carrera, nombre_carrera, clave_carrera, estatus FROM carreras WHERE id_carrera = ?";
+        String sql = "SELECT c.id_carrera, c.nombre_carrera, c.clave_carrera, c.estatus, " + SUBCONSULTA_NIVELES
+                + " FROM carreras c WHERE c.id_carrera = ?";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql))
@@ -206,6 +217,7 @@ public class DAOCarrera
         carrera.setNombreCarrera(resultado.getString("nombre_carrera"));
         carrera.setClaveCarrera(resultado.getString("clave_carrera"));
         carrera.setEstatus(resultado.getString("estatus"));
+        carrera.setNivelesTexto(resultado.getString("niveles"));
         return carrera;
     }
 }

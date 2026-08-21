@@ -47,6 +47,30 @@
             </ul>
 
             <% if (rolSeleccionado != null) { %>
+            <div class="barra-filtros" data-filtros-tabla="#tbodyPermisos">
+                <div class="campo-filtro">
+                    <label for="filtroActivoPermisos">Activo</label>
+                    <select id="filtroActivoPermisos" class="form-select form-select-sm" data-filtro-campo="activo">
+                        <option value="" selected>Todos</option>
+                        <option value="Si">Activos</option>
+                        <option value="No">Inactivos</option>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroModuloPermisos">Módulo</label>
+                    <select id="filtroModuloPermisos" class="form-select form-select-sm" data-filtro-campo="modulo">
+                        <option value="" selected>Todos</option>
+                        <% for (String modulo : porModulo.keySet()) { %>
+                        <option value="<%= modulo%>"><%= modulo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoPermisos">Buscar</label>
+                    <input type="text" id="filtroTextoPermisos" class="form-control form-control-sm" data-filtro-texto placeholder="Clave o descripción...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap mt-3">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -57,15 +81,13 @@
                             <th class="text-center">Activo</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyPermisos">
                         <% for (String modulo : porModulo.keySet()) {
                             ArrayList<Permiso> delModulo = porModulo.get(modulo);
                             for (int i = 0; i < delModulo.size(); i++) {
                                 Permiso p = delModulo.get(i); %>
-                        <tr>
-                            <% if (i == 0) { %>
-                            <td rowspan="<%= delModulo.size()%>" class="text-capitalize fw-semibold"><%= modulo%></td>
-                            <% } %>
+                        <tr data-fila-filtrable data-modulo="<%= modulo%>" data-activo="<%= p.isActivo() ? "Si" : "No"%>">
+                            <td class="text-capitalize fw-semibold"><%= modulo%></td>
                             <td><code><%= p.getClave()%></code></td>
                             <td><%= p.getDescripcion() != null ? p.getDescripcion() : ""%></td>
                             <td class="text-center">
@@ -82,6 +104,7 @@
                         <% } } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>

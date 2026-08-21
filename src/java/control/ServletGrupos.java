@@ -32,6 +32,8 @@ public class ServletGrupos extends HttpServlet
 
         ServicioGrupo servicioGrupo = new ServicioGrupo();
         solicitud.setAttribute("grupos", servicioGrupo.listar());
+        String idEditar = solicitud.getParameter("editar");
+        if (idEditar != null && !idEditar.isEmpty()) solicitud.setAttribute("grupoEditar", servicioGrupo.buscarPorId(Integer.parseInt(idEditar)));
         solicitud.setAttribute("cuatrimestresDisponibles", new DAOPlanCuatrimestre().listarDePlanesVigentes());
         solicitud.setAttribute("generaciones", new ServicioGeneracion().listar());
         solicitud.setAttribute("periodos", new ServicioPeriodo().listar());
@@ -54,6 +56,29 @@ public class ServletGrupos extends HttpServlet
         if ("Cerrar".equals(accion))
         {
             servicioGrupo.cerrar(Integer.parseInt(solicitud.getParameter("idGrupo")), responsable);
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SGrupos");
+            return;
+        }
+
+        if ("Modificar".equals(accion))
+        {
+            Grupo grupo = new Grupo();
+            grupo.setIdGrupo(Integer.parseInt(solicitud.getParameter("idGrupo")));
+            grupo.setNombreGrupo(solicitud.getParameter("tfNombreGrupo"));
+            grupo.setIdGeneracion(Integer.parseInt(solicitud.getParameter("selGeneracion")));
+            grupo.setIdPeriodo(Integer.parseInt(solicitud.getParameter("selPeriodo")));
+            ResultadoSimple resultado = servicioGrupo.actualizar(grupo, responsable);
+            if (!resultado.isExito())
+            {
+                solicitud.setAttribute("error", resultado.getMensajeError());
+                solicitud.setAttribute("grupoEditar", grupo);
+                solicitud.setAttribute("grupos", servicioGrupo.listar());
+                solicitud.setAttribute("cuatrimestresDisponibles", new DAOPlanCuatrimestre().listarDePlanesVigentes());
+                solicitud.setAttribute("generaciones", new ServicioGeneracion().listar());
+                solicitud.setAttribute("periodos", new ServicioPeriodo().listar());
+                solicitud.getServletContext().getRequestDispatcher("/admin/grupos.jsp").forward(solicitud, respuesta);
+                return;
+            }
             respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SGrupos");
             return;
         }

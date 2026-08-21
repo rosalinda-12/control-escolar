@@ -35,14 +35,30 @@ public class ServicioAlumno
         return daoAlumno.buscarPorId(idAlumno);
     }
 
-    /**
-     * Da de alta al alumno (persona + alumno) y, en el mismo formulario, su
-     * primera trayectoria (carrera/plan + matrícula). La matrícula es
-     * obligatoria desde el inicio: ya no queda un alumno "a medias" sin
-     * trayectoria. Si más adelante el alumno cambia de carrera o continúa
-     * de TSU a Ingeniería, esas trayectorias adicionales se siguen dando de
-     * alta por separado en Trayectorias.
-     */
+    public void marcarEgresado(int idAlumno)
+    {
+        daoAlumno.actualizarEstatus(idAlumno, "Egresado");
+    }
+
+    public ResultadoSimple actualizar(Alumno alumno, Usuario responsable)
+    {
+        Alumno anterior = daoAlumno.buscarPorId(alumno.getIdAlumno());
+        if (anterior == null) return ResultadoSimple.fallo("El alumno ya no existe.");
+        if (!anterior.getCorreo().equalsIgnoreCase(alumno.getCorreo()))
+        {
+            Persona persona = daoPersona.buscarPorCorreo(alumno.getCorreo());
+            if (persona != null && persona.getIdPersona() != alumno.getIdPersona())
+            {
+                return ResultadoSimple.fallo("Ya existe otra persona con ese correo.");
+            }
+        }
+        daoAlumno.actualizar(alumno);
+        servicioBitacora.registrarAlta(responsable, "alumnos", alumno.getIdAlumno(), "Actualizó datos del alumno " + alumno.getNombreCompleto());
+        return ResultadoSimple.exito(alumno.getIdAlumno());
+    }
+
+
+
     public ResultadoSimple agregarConTrayectoria(Persona persona, int idPlan, String matricula, Usuario responsable)
     {
         if (daoPersona.existeCorreo(persona.getCorreo()))
@@ -72,11 +88,48 @@ public class ServicioAlumno
         return ResultadoSimple.exito(idAlumno);
     }
 
-    public void actualizarEstatus(int idAlumno, String estatus, Usuario responsable)
+
+
+    public void bajaTemporal(int idAlumno, Usuario responsable)
     {
         Alumno alumno = daoAlumno.buscarPorId(idAlumno);
-        daoAlumno.actualizarEstatus(idAlumno, estatus);
+        daoAlumno.actualizarEstatus(idAlumno, "BajaTemporal");
+        servicioBitacora.registrarBaja(responsable, "alumnos", idAlumno,
+                "Dio de baja temporal a " + (alumno != null ? alumno.getNombreCompleto() : idAlumno));
+    }
+
+    public void reactivar(int idAlumno, Usuario responsable)
+    {
+        Alumno alumno = daoAlumno.buscarPorId(idAlumno);
+        daoAlumno.actualizarEstatus(idAlumno, "Activo");
         servicioBitacora.registrarAlta(responsable, "alumnos", idAlumno,
-                "Cambió el estatus de " + (alumno != null ? alumno.getNombreCompleto() : idAlumno) + " a " + estatus);
+                "Reactivó a " + (alumno != null ? alumno.getNombreCompleto() : idAlumno));
+    }
+
+
+
+    public void bajaDefinitiva(int idAlumno, Usuario responsable)
+    {
+        Alumno alumno = daoAlumno.buscarPorId(idAlumno);
+        daoAlumno.actualizarEstatus(idAlumno, "BajaDefinitiva");
+        servicioBitacora.registrarBaja(responsable, "alumnos", idAlumno,
+                "Dio de baja definitiva a " + (alumno != null ? alumno.getNombreCompleto() : idAlumno)
+                + "; ya no podrá inscribirse nuevamente");
+    }
+
+
+
+    public void revertirBajaDefinitiva(int idAlumno, Usuario responsable)
+    {
+        Alumno alumno = daoAlumno.buscarPorId(idAlumno);
+
+        if (alumno == null || !"BajaDefinitiva".equals(alumno.getEstatus()))
+        {
+            return;
+        }
+
+        daoAlumno.actualizarEstatus(idAlumno, "Activo");
+        servicioBitacora.registrarAlta(responsable, "alumnos", idAlumno,
+                "Revirtió la baja definitiva de " + alumno.getNombreCompleto() + " (corrección de error)");
     }
 }

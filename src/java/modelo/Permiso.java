@@ -7,8 +7,6 @@ public class Permiso
     private String modulo;
     private String descripcion;
 
-    // Se llena solo cuando el permiso viene consultado en el contexto de
-    // un rol específico (pantalla de matriz rol x permiso).
     private boolean activo;
 
     public int getIdPermiso()

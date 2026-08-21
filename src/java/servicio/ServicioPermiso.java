@@ -30,13 +30,6 @@ public class ServicioPermiso
         return daoPermiso.listarConEstatusPorRol(idRol);
     }
 
-    /**
-     * Activa/desactiva un permiso para un rol. El rol "Administrador"
-     * (es_administrador_principal = 1) no depende de esta tabla -su
-     * acceso es total por código-, así que no tiene sentido dejar que se
-     * le desactive nada; se rechaza explícitamente para que quede claro
-     * en la UI por qué esos checks no cambian.
-     */
     public ResultadoSimple establecer(int idRol, int idPermiso, boolean activo, Usuario responsable)
     {
         Rol rol = daoRol.buscarPorId(idRol);

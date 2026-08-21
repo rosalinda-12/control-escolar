@@ -44,6 +44,28 @@
             <% } else if (periodos.isEmpty()) { %>
             <div class="mensaje-exito mt-4">No hay periodos registrados todavía.</div>
             <% } else { %>
+            <div class="barra-filtros" data-filtros-tabla="#tbodyPeriodos">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusPeriodos">Estatus</label>
+                    <select id="filtroEstatusPeriodos" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="Activo" selected>Activos (actuales)</option>
+                        <option value="">Todos</option>
+                        <option value="Cerrado">Cerrados</option>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroCicloPeriodos">Ciclo</label>
+                    <select id="filtroCicloPeriodos" class="form-select form-select-sm" data-filtro-campo="ciclo">
+                        <option value="" selected>Todos</option>
+                        <% java.util.LinkedHashSet<String> ciclosPeriodos = new java.util.LinkedHashSet<String>();
+                           for (Periodo p : periodos) { ciclosPeriodos.add(p.getNombreCiclo()); }
+                           for (String nombreCiclo : ciclosPeriodos) { %>
+                        <option value="<%= nombreCiclo%>"><%= nombreCiclo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -56,9 +78,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyPeriodos">
                         <% for (Periodo periodo : periodos) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= periodo.getEstatus()%>" data-ciclo="<%= periodo.getNombreCiclo()%>">
                             <td><%= periodo.getNombreCiclo()%></td>
                             <td><%= periodo.getNombrePeriodo()%></td>
                             <td><%= periodo.getFechaInicio()%></td>
@@ -71,17 +93,18 @@
                                 <% } %>
                             </td>
                             <td class="text-end">
-                                <a href="SPeriodos?editar=<%= periodo.getIdPeriodo()%>" class="btn btn-sm btn-outline-formal">Editar</a>
+                                <a href="SPeriodos?editar=<%= periodo.getIdPeriodo()%>" class="btn btn-sm btn-icon-formal" title="Editar periodo" aria-label="Editar periodo"><i class="bi bi-pencil-square"></i></a>
                                 <form method="post" action="SPeriodos" class="d-inline">
                                     <input type="hidden" name="accion" value="Eliminar">
                                     <input type="hidden" name="idPeriodo" value="<%= periodo.getIdPeriodo()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar periodo" aria-label="Eliminar periodo"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>

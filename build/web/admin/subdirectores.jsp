@@ -5,6 +5,7 @@
 <%
     ArrayList<Subdirector> subdirectores = (ArrayList<Subdirector>) request.getAttribute("subdirectores");
     ArrayList<Carrera> carreras = (ArrayList<Carrera>) request.getAttribute("carreras");
+    Subdirector subdirectorEditar = (Subdirector) request.getAttribute("subdirectorEditar");
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -41,23 +42,38 @@
             <% if (subdirectores.isEmpty()) { %>
             <div class="mensaje-exito mt-4">No hay subdirectores registrados todavía.</div>
             <% } else { %>
+            <div class="barra-filtros" data-filtros-tabla="#tbodySubdirectores">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusSubdirectores">Estatus</label>
+                    <select id="filtroEstatusSubdirectores" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="Activo" selected>Activos (actuales)</option>
+                        <option value="">Todos</option>
+                        <option value="Inactivo">Inactivos</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoSubdirectores">Buscar</label>
+                    <input type="text" id="filtroTextoSubdirectores" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre, correo o carrera...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
                             <th>Nombre</th>
                             <th>Correo</th>
-                            <th>Carrera</th>
+                            <th>Carreras</th>
                             <th>Estatus</th>
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodySubdirectores">
                         <% for (Subdirector subdirector : subdirectores) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= "Activo".equals(subdirector.getEstatus()) ? "Activo" : "Inactivo"%>">
                             <td><%= subdirector.getNombreCompleto()%></td>
                             <td><%= subdirector.getCorreo()%></td>
-                            <td><%= subdirector.getNombreCarrera()%></td>
+                            <td><%= subdirector.getNombresCarrera().isEmpty() ? subdirector.getNombreCarrera() : String.join(", ", subdirector.getNombresCarrera())%></td>
                             <td>
                                 <% if ("Activo".equals(subdirector.getEstatus())) { %>
                                 <span class="badge text-bg-success">Activo</span>
@@ -66,12 +82,13 @@
                                 <% } %>
                             </td>
                             <td class="text-end">
+                                <a href="SSubdirectores?editar=<%= subdirector.getIdSubdirector()%>" class="btn btn-sm btn-icon-formal" title="Editar subdirector" aria-label="Editar subdirector"><i class="bi bi-pencil-square"></i></a>
                                 <% if ("Activo".equals(subdirector.getEstatus())) { %>
                                 <form method="post" action="SSubdirectores" class="d-inline"
                                       onsubmit="return confirm('¿Desactivar a este subdirector?');">
                                     <input type="hidden" name="accion" value="Desactivar">
                                     <input type="hidden" name="idSubdirector" value="<%= subdirector.getIdSubdirector()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Desactivar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Desactivar subdirector" aria-label="Desactivar subdirector"><i class="bi bi-person-dash"></i></button>
                                 </form>
                                 <% } %>
                             </td>
@@ -79,6 +96,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>
@@ -88,40 +106,43 @@
                 <div class="modal-content">
                     <form method="post" action="SSubdirectores">
                         <div class="modal-header">
-                            <h5 class="modal-title">Nuevo subdirector</h5>
+                            <h5 class="modal-title"><%= subdirectorEditar == null ? "Nuevo subdirector" : "Editar subdirector"%></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="accion" value="Agregar">
+                            <input type="hidden" name="accion" value="<%= subdirectorEditar == null ? "Agregar" : "Modificar"%>">
+                            <% if (subdirectorEditar != null) { %>
+                            <input type="hidden" name="idSubdirector" value="<%= subdirectorEditar.getIdSubdirector()%>">
+                            <input type="hidden" name="idPersona" value="<%= subdirectorEditar.getIdPersona()%>">
+                            <% } %>
                             <div class="mb-3">
                                 <label class="form-label">Nombres</label>
-                                <input type="text" name="tfNombres" class="form-control" required>
+                                <input type="text" name="tfNombres" class="form-control" value="<%= subdirectorEditar == null ? "" : subdirectorEditar.getNombres()%>" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Apellido paterno</label>
-                                <input type="text" name="tfApellidoPaterno" class="form-control" required>
+                                <input type="text" name="tfApellidoPaterno" class="form-control" value="<%= subdirectorEditar == null ? "" : subdirectorEditar.getApellidoPaterno()%>" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Apellido materno</label>
-                                <input type="text" name="tfApellidoMaterno" class="form-control" required>
+                                <input type="text" name="tfApellidoMaterno" class="form-control" value="<%= subdirectorEditar == null ? "" : subdirectorEditar.getApellidoMaterno()%>" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Correo institucional</label>
-                                <input type="email" name="tfCorreo" class="form-control" required>
+                                <input type="email" name="tfCorreo" class="form-control" value="<%= subdirectorEditar == null ? "" : subdirectorEditar.getCorreo()%>" required>
                                 <div class="form-text">Con este correo el subdirector podrá crear su cuenta después.</div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Carrera</label>
-                                <select name="selCarrera" class="form-select" required>
-                                    <option value="">-- Carrera --</option>
+                                <label class="form-label">Carreras a cargo</label>
+                                <select name="selCarrera" class="form-select" multiple size="5" required>
                                     <% for (Carrera c : carreras) { %>
-                                    <option value="<%= c.getIdCarrera()%>"><%= c.getNombreCarrera()%></option>
+                                    <option value="<%= c.getIdCarrera()%>" <%= subdirectorEditar != null && subdirectorEditar.getIdsCarrera().contains(c.getIdCarrera()) ? "selected" : ""%>><%= c.getNombreCarrera()%></option>
                                     <% } %>
                                 </select>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary-formal">Guardar</button>
+                            <button type="submit" class="btn btn-primary-formal"><%= subdirectorEditar == null ? "Guardar" : "Actualizar"%></button>
                         </div>
                     </form>
                 </div>
@@ -130,6 +151,9 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
+        <% if (subdirectorEditar != null) { %>
+        <script>new bootstrap.Modal(document.getElementById("modalSubdirector")).show();</script>
+        <% } %>
             </main>
     </div>
 </div>

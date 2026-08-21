@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DAOSubdirector
 {
@@ -29,7 +30,9 @@ public class DAOSubdirector
         {
             while (resultado.next())
             {
-                lista.add(construirSubdirector(resultado));
+                Subdirector subdirector = construirSubdirector(resultado);
+                cargarCarreras(subdirector);
+                lista.add(subdirector);
             }
         }
         catch (SQLException excepcion)
@@ -53,7 +56,9 @@ public class DAOSubdirector
             {
                 if (resultado.next())
                 {
-                    return construirSubdirector(resultado);
+                    Subdirector subdirector = construirSubdirector(resultado);
+                    cargarCarreras(subdirector);
+                    return subdirector;
                 }
             }
         }
@@ -78,7 +83,9 @@ public class DAOSubdirector
             {
                 if (resultado.next())
                 {
-                    return construirSubdirector(resultado);
+                    Subdirector subdirector = construirSubdirector(resultado);
+                    cargarCarreras(subdirector);
+                    return subdirector;
                 }
             }
         }
@@ -134,6 +141,30 @@ public class DAOSubdirector
         }
     }
 
+    public void actualizarCarreras(int idSubdirector, List<Integer> idsCarrera)
+    {
+        String borrar = "DELETE FROM subdirector_carreras WHERE id_subdirector = ?";
+        String insertar = "INSERT INTO subdirector_carreras (id_subdirector, id_carrera) VALUES (?, ?)";
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement eliminar = conexion.prepareStatement(borrar);
+             PreparedStatement agregar = conexion.prepareStatement(insertar))
+        {
+            conexion.setAutoCommit(false);
+            eliminar.setInt(1, idSubdirector);
+            eliminar.executeUpdate();
+            for (Integer idCarrera : idsCarrera)
+            {
+                agregar.setInt(1, idSubdirector);
+                agregar.setInt(2, idCarrera);
+                agregar.addBatch();
+            }
+            agregar.executeBatch();
+            conexion.commit();
+        }
+        catch (SQLException excepcion)
+        { throw new RuntimeException(excepcion); }
+    }
+
     public void actualizarEstatus(int idSubdirector, String estatus)
     {
         String sql = "UPDATE subdirectores SET estatus = ? WHERE id_subdirector = ?";
@@ -164,5 +195,26 @@ public class DAOSubdirector
         subdirector.setNombreCarrera(resultado.getString("nombre_carrera"));
         subdirector.setEstatus(resultado.getString("estatus"));
         return subdirector;
+    }
+
+    private void cargarCarreras(Subdirector subdirector)
+    {
+        ArrayList<Integer> ids = new ArrayList<>();
+        ArrayList<String> nombres = new ArrayList<>();
+        String sql = "SELECT sc.id_carrera, c.nombre_carrera FROM subdirector_carreras sc "
+                + "JOIN carreras c ON c.id_carrera = sc.id_carrera WHERE sc.id_subdirector = ? ORDER BY c.nombre_carrera";
+        try (Connection conexion = ConexionMySQL.obtenerConexion(); PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setInt(1, subdirector.getIdSubdirector());
+            try (ResultSet resultado = sentencia.executeQuery())
+            {
+                while (resultado.next())
+                { ids.add(resultado.getInt("id_carrera")); nombres.add(resultado.getString("nombre_carrera")); }
+            }
+            if (!ids.isEmpty())
+            { subdirector.setIdsCarrera(ids); subdirector.setNombresCarrera(nombres); }
+        }
+        catch (SQLException excepcion)
+        { throw new RuntimeException(excepcion); }
     }
 }

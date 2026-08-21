@@ -10,11 +10,6 @@ import modelo.Usuario;
 import doa.DAOGrupo;
 import java.io.IOException;
 
-/**
- * Grupos de la carrera del Subdirector en sesión (solo consulta; el
- * Subdirector no da de alta grupos, solo asigna docentes desde aquí,
- * ver ServletSubdirectorAsignaciones).
- */
 @WebServlet("/subdirector/SGrupos")
 public class ServletSubdirectorGrupos extends HttpServlet
 {
@@ -24,7 +19,7 @@ public class ServletSubdirectorGrupos extends HttpServlet
         HttpSession sesion = solicitud.getSession(false);
         Usuario usuarioSesion = (Usuario) sesion.getAttribute("usuario");
 
-        if (usuarioSesion.getIdCarrera() == null)
+        if (usuarioSesion.getIdsCarrera().isEmpty())
         {
             solicitud.setAttribute("error", "Tu cuenta de Subdirector no tiene una carrera asignada. Pide al Administrador que la configure.");
             solicitud.setAttribute("grupos", new java.util.ArrayList<>());
@@ -32,7 +27,7 @@ public class ServletSubdirectorGrupos extends HttpServlet
             return;
         }
 
-        solicitud.setAttribute("grupos", new DAOGrupo().listarPorCarrera(usuarioSesion.getIdCarrera()));
+        solicitud.setAttribute("grupos", new DAOGrupo().listarPorCarreras(usuarioSesion.getIdsCarrera()));
         solicitud.getServletContext().getRequestDispatcher("/subdirector/grupos.jsp").forward(solicitud, respuesta);
     }
 }

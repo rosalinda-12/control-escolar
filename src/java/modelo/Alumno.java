@@ -9,6 +9,8 @@ public class Alumno
     private String apellidoMaterno;
     private String correo;
     private String estatus;
+    private String nombreCarrera;
+    private String nombreGrupo;
 
     public int getIdAlumno()
     {
@@ -78,6 +80,26 @@ public class Alumno
     public void setEstatus(String estatus)
     {
         this.estatus = estatus;
+    }
+
+    public String getNombreCarrera()
+    {
+        return nombreCarrera;
+    }
+
+    public void setNombreCarrera(String nombreCarrera)
+    {
+        this.nombreCarrera = nombreCarrera;
+    }
+
+    public String getNombreGrupo()
+    {
+        return nombreGrupo;
+    }
+
+    public void setNombreGrupo(String nombreGrupo)
+    {
+        this.nombreGrupo = nombreGrupo;
     }
 
     public String getNombreCompleto()

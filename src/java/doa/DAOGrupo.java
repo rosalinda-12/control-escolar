@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DAOGrupo
 {
@@ -26,6 +27,30 @@ public class DAOGrupo
     {
         ArrayList<Grupo> lista = new ArrayList<>();
         String sql = SELECCION_BASE + "ORDER BY pr.fecha_inicio DESC, c.nombre_carrera, g.nombre_grupo";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql);
+             ResultSet resultado = sentencia.executeQuery())
+        {
+            while (resultado.next())
+            {
+                lista.add(construirGrupo(resultado));
+            }
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+
+        return lista;
+    }
+
+    public ArrayList<Grupo> listarActivosParaInscripcion()
+    {
+        ArrayList<Grupo> lista = new ArrayList<>();
+        String sql = SELECCION_BASE
+                + "WHERE g.estatus = 'Activo' AND pr.estatus = 'Activo' "
+                + "ORDER BY pr.fecha_inicio DESC, c.nombre_carrera, g.nombre_grupo";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql);
@@ -69,10 +94,8 @@ public class DAOGrupo
         return null;
     }
 
-    /**
-     * Grupos de una sola carrera, para el panel del Subdirector (que solo
-     * puede consultar/operar dentro de la carrera que tiene asignada).
-     */
+
+
     public ArrayList<Grupo> listarPorCarrera(int idCarrera)
     {
         ArrayList<Grupo> lista = new ArrayList<>();
@@ -96,6 +119,23 @@ public class DAOGrupo
             throw new RuntimeException(excepcion);
         }
 
+        return lista;
+    }
+
+    public ArrayList<Grupo> listarPorCarreras(List<Integer> idsCarrera)
+    {
+        if (idsCarrera == null || idsCarrera.isEmpty()) return new ArrayList<>();
+        ArrayList<Grupo> lista = new ArrayList<>();
+        String marcadores = String.join(",", java.util.Collections.nCopies(idsCarrera.size(), "?"));
+        String sql = SELECCION_BASE + "WHERE c.id_carrera IN (" + marcadores + ") ORDER BY pr.fecha_inicio DESC, g.nombre_grupo";
+        try (Connection conexion = ConexionMySQL.obtenerConexion(); PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            for (int indice = 0; indice < idsCarrera.size(); indice++) sentencia.setInt(indice + 1, idsCarrera.get(indice));
+            try (ResultSet resultado = sentencia.executeQuery())
+            { while (resultado.next()) lista.add(construirGrupo(resultado)); }
+        }
+        catch (SQLException excepcion)
+        { throw new RuntimeException(excepcion); }
         return lista;
     }
 
@@ -163,6 +203,23 @@ public class DAOGrupo
         {
             sentencia.setString(1, estatus);
             sentencia.setInt(2, idGrupo);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
+    public void actualizar(Grupo grupo)
+    {
+        String sql = "UPDATE grupos SET nombre_grupo = ?, id_generacion = ?, id_periodo = ? WHERE id_grupo = ?";
+        try (Connection conexion = ConexionMySQL.obtenerConexion(); PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, grupo.getNombreGrupo());
+            sentencia.setInt(2, grupo.getIdGeneracion());
+            sentencia.setInt(3, grupo.getIdPeriodo());
+            sentencia.setInt(4, grupo.getIdGrupo());
             sentencia.executeUpdate();
         }
         catch (SQLException excepcion)

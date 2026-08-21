@@ -42,9 +42,7 @@ public class ServletCalificaciones extends HttpServlet
 
         int idGrupoMateria = Integer.parseInt(parametroGrupoMateria);
 
-        // Defensa en profundidad: si alguien cambia el id en la URL para
-        // apuntar a una materia de grupo que no es suya, se corta aquí
-        // mismo con 403 antes de tocar cualquier dato de otro docente.
+
         if (!autorizacion.puedeOperarSobreGrupoMateria(usuarioSesion, idGrupoMateria))
         {
             respuesta.sendError(HttpServletResponse.SC_FORBIDDEN, "Esa materia de grupo no está a tu cargo.");
@@ -62,6 +60,8 @@ public class ServletCalificaciones extends HttpServlet
         }
 
         solicitud.setAttribute("contexto", contexto);
+        solicitud.setAttribute("soloLectura", !"Activo".equals(contexto.getEstatusGrupo())
+            || !"Activo".equals(contexto.getEstatusPeriodo()));
         solicitud.setAttribute("alumnos", servicioCalificacion.listarAlumnos(idGrupoMateria));
         solicitud.getServletContext().getRequestDispatcher("/maestro/captura_calificaciones.jsp").forward(solicitud, respuesta);
     }
@@ -82,8 +82,7 @@ public class ServletCalificaciones extends HttpServlet
 
         int idGrupoMateria = Integer.parseInt(solicitud.getParameter("idGrupoMateria"));
 
-        // Misma validación de alcance que en el GET: el permiso por sí
-        // solo no basta, también tiene que ser SU materia de grupo.
+
         if (!autorizacion.puedeOperarSobreGrupoMateria(usuarioSesion, idGrupoMateria))
         {
             respuesta.sendError(HttpServletResponse.SC_FORBIDDEN, "Esa materia de grupo no está a tu cargo.");
@@ -91,6 +90,14 @@ public class ServletCalificaciones extends HttpServlet
         }
 
         int numeroParcial = Integer.parseInt(solicitud.getParameter("numeroParcial"));
+
+        DocenteAsignacion contextoActual = servicioCalificacion.obtenerGrupoMateriaDelDocente(idGrupoMateria, idDocente);
+        if (contextoActual == null || !"Activo".equals(contextoActual.getEstatusGrupo())
+            || !"Activo".equals(contextoActual.getEstatusPeriodo()))
+        {
+            respuesta.sendError(HttpServletResponse.SC_FORBIDDEN, "Las calificaciones de este periodo son de solo lectura.");
+            return;
+        }
 
         Map<Integer, String> notas = new HashMap<>();
 

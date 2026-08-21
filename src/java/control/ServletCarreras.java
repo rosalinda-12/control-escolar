@@ -103,12 +103,7 @@ public class ServletCarreras extends HttpServlet
             return;
         }
 
-        // Si la carrera se creó desde un modal independiente en otra
-        // pantalla (por ejemplo, el botón "Agregar carrera" dentro de
-        // Trayectoria), "retorno" permite regresar ahí en lugar del
-        // listado de carreras. Solo se acepta una ruta relativa dentro
-        // del propio módulo de admin, para no abrir una redirección
-        // abierta hacia otro dominio.
+
         String retorno = solicitud.getParameter("retorno");
         if (retorno != null && retorno.startsWith("STrayectorias?idAlumno="))
         {

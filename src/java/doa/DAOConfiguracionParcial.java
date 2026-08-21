@@ -18,6 +18,7 @@ public class DAOConfiguracionParcial
     public ArrayList<ConfiguracionParcial> listar()
     {
         ArrayList<ConfiguracionParcial> lista = new ArrayList<>();
+        crearParaPeriodosSinConfiguracion();
         String sql = SELECCION_BASE + "ORDER BY p.fecha_inicio DESC";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
@@ -80,14 +81,33 @@ public class DAOConfiguracionParcial
 
     public void actualizarParcialActivo(int idPeriodo, int parcialActivo)
     {
-        String sql = "UPDATE configuracion_parciales SET parcial_activo = ?, fecha_actualizacion = ? WHERE id_periodo = ?";
+        String sql = "INSERT INTO configuracion_parciales (id_periodo, parcial_activo, fecha_actualizacion) VALUES (?, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE parcial_activo = VALUES(parcial_activo), fecha_actualizacion = VALUES(fecha_actualizacion)";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql))
         {
-            sentencia.setInt(1, parcialActivo);
-            sentencia.setTimestamp(2, Timestamp.valueOf(java.time.LocalDateTime.now()));
-            sentencia.setInt(3, idPeriodo);
+            sentencia.setInt(1, idPeriodo);
+            sentencia.setInt(2, parcialActivo);
+            sentencia.setTimestamp(3, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
+    private void crearParaPeriodosSinConfiguracion()
+    {
+        String sql = "INSERT INTO configuracion_parciales (id_periodo, parcial_activo) "
+                + "SELECT p.id_periodo, 1 FROM periodos_escolares p "
+                + "LEFT JOIN configuracion_parciales c ON c.id_periodo = p.id_periodo "
+                + "WHERE c.id_periodo IS NULL";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
             sentencia.executeUpdate();
         }
         catch (SQLException excepcion)

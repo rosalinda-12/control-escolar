@@ -7,8 +7,7 @@
     Grupo grupo = (Grupo) request.getAttribute("grupo");
     ArrayList<GrupoMateria> materiasDelGrupo = (ArrayList<GrupoMateria>) request.getAttribute("materiasDelGrupo");
     ArrayList<Docente> docentes = (ArrayList<Docente>) request.getAttribute("docentes");
-    Boolean puedeGestionarObj = (Boolean) request.getAttribute("puedeGestionar");
-    boolean puedeGestionar = puedeGestionarObj != null && puedeGestionarObj;
+    boolean puedeGestionar = Boolean.TRUE.equals(request.getAttribute("puedeGestionar"));
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,31 +23,56 @@
         <%@ include file="menu_subdirector.jsp" %>
 
         <div class="container">
-            <h2 class="mt-4">Docentes del grupo <%= grupo.getNombreGrupo()%></h2>
-            <p class="texto-info"><%= grupo.getNombreCarrera()%> — <%= grupo.getNombrePlan()%> — Cuatrimestre <%= grupo.getNumeroCuatrimestre()%> — <%= grupo.getNombrePeriodo()%></p>
+            <header class="asignaciones-hero asignaciones-hero-subdirector">
+                <div>
+                    <span class="asignaciones-eyebrow"><i class="bi bi-person-workspace"></i> Asignación académica</span>
+                    <h1>Docentes del grupo <strong><%= grupo.getNombreGrupo()%></strong></h1>
+                    <p class="asignaciones-carrera"><i class="bi bi-mortarboard-fill"></i><%= grupo.getNombreCarrera()%></p>
+                </div>
+                <span class="asignaciones-grupo-badge"><i class="bi bi-people-fill"></i> <%= grupo.getNombreGrupo()%></span>
+            </header>
+            <div class="asignaciones-contexto">
+                <div><span>Carrera a cargo</span><strong><%= grupo.getNombreCarrera()%></strong></div>
+                <div><span>Plan de estudios</span><strong><%= grupo.getNombrePlan()%></strong></div>
+                <div><span>Cuatrimestre</span><strong><%= grupo.getNumeroCuatrimestre()%>°</strong></div>
+                <div><span>Periodo</span><strong><%= grupo.getNombrePeriodo()%></strong></div>
+            </div>
 
             <% if (request.getAttribute("error") != null) { %>
             <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
             <% } %>
 
             <% if (!puedeGestionar) { %>
-            <div class="mensaje-exito"><i class="bi bi-info-circle me-1"></i>Tu cuenta solo tiene permiso de consulta sobre asignaciones (pídele al Administrador el permiso "asignaciones.crear" si necesitas asignar).</div>
+            <div class="mensaje-exito"><i class="bi bi-info-circle me-1"></i>Consulta de asignaciones. Tu cuenta no tiene permiso para modificarlas.</div>
             <% } %>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyAsignacionesSubdirector">
+                <div class="campo-filtro">
+                    <label for="filtroAsignacionSubdirector">Asignación</label>
+                    <select id="filtroAsignacionSubdirector" class="form-select form-select-sm" data-filtro-campo="asignacion">
+                        <option value="" selected>Todas</option>
+                        <option value="Asignado">Con docente</option>
+                        <option value="Sin asignar">Sin docente</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoAsignacionesSubdirector">Buscar</label>
+                    <input type="text" id="filtroTextoAsignacionesSubdirector" class="form-control form-control-sm" data-filtro-texto placeholder="Materia o docente...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
                             <th>Materia</th>
                             <th>Docente asignado</th>
-                            <% if (puedeGestionar) { %>
-                            <th></th>
-                            <% } %>
+                            <% if (puedeGestionar) { %><th></th><% } %>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyAsignacionesSubdirector">
                         <% for (GrupoMateria gm : materiasDelGrupo) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-asignacion="<%= gm.isTieneDocenteAsignado() ? "Asignado" : "Sin asignar"%>">
                             <td><%= gm.getNombreMateria()%></td>
                             <td>
                                 <% if (gm.isTieneDocenteAsignado()) { %>
@@ -60,22 +84,26 @@
                             <% if (puedeGestionar) { %>
                             <td class="text-end">
                                 <% if (gm.isTieneDocenteAsignado()) { %>
+                                <% if (new servicio.ServicioAutorizacion().tienePermiso((modelo.Usuario) session.getAttribute("usuario"), "asignaciones.editar")) { %>
                                 <form method="post" action="SAsignaciones" class="d-inline">
-                                    <input type="hidden" name="accion" value="Quitar">
+                                    <input type="hidden" name="accion" value="Desactivar">
                                     <input type="hidden" name="idGrupo" value="<%= grupo.getIdGrupo()%>">
                                     <input type="hidden" name="idGrupoMateria" value="<%= gm.getIdGrupoMateria()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Quitar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Desactivar asignación" aria-label="Desactivar asignación"><i class="bi bi-person-dash"></i></button>
                                 </form>
+                                <% } %>
                                 <% } else if (!docentes.isEmpty()) { %>
                                 <form method="post" action="SAsignaciones" class="d-flex gap-2 justify-content-end">
                                     <input type="hidden" name="accion" value="Asignar">
                                     <input type="hidden" name="idGrupo" value="<%= grupo.getIdGrupo()%>">
                                     <input type="hidden" name="idGrupoMateria" value="<%= gm.getIdGrupoMateria()%>">
-                                    <select name="selDocente" class="form-select form-select-sm" style="max-width: 220px;" required>
-                                        <% for (Docente docente : docentes) { %>
-                                        <option value="<%= docente.getIdDocente()%>"><%= docente.getNombreCompleto()%></option>
-                                        <% } %>
-                                    </select>
+                                    <input type="hidden" name="selDocente" class="docente-seleccionado-id">
+                                    <div class="docente-picker">
+                                        <input type="search" class="form-control form-control-sm asignacion-docente-select" placeholder="Buscar docente..." autocomplete="off" required aria-label="Buscar docente para <%= gm.getNombreMateria()%>">
+                                        <div class="docente-picker-options">
+                                            <% for (Docente docente : docentes) { %><button type="button" class="docente-picker-option" data-id-docente="<%= docente.getIdDocente()%>" data-nombre-docente="<%= docente.getNombreCompleto()%>"><%= docente.getNombreCompleto()%></button><% } %>
+                                        </div>
+                                    </div>
                                     <button type="submit" class="btn btn-sm btn-primary-formal">Asignar</button>
                                 </form>
                                 <% } %>
@@ -85,6 +113,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ninguna asignación coincide con los filtros seleccionados.</div>
             </div>
         </div>
 

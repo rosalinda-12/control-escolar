@@ -26,11 +26,8 @@ public class ServicioCurriculo
         return daoPlanCuatrimestre.listarPorPlan(idPlan);
     }
 
-    /**
-     * Cuatrimestres de todos los planes vigentes, con su etiqueta de
-     * carrera/plan/cuatrimestre ya armada. Se usa en el selector de "Nueva
-     * materia" para elegir dónde queda ligada.
-     */
+
+
     public ArrayList<PlanCuatrimestre> listarCuatrimestresDePlanesVigentes()
     {
         return daoPlanCuatrimestre.listarDePlanesVigentes();
@@ -41,13 +38,8 @@ public class ServicioCurriculo
         return daoPlanNivel.nivelParaCuatrimestre(idPlan, numeroCuatrimestre);
     }
 
-    /**
-     * Regresa, por cada cuatrimestre del plan, la lista de materias que ya
-     * quedaron ligadas a él desde su alta. Se usa para pintar de un vistazo
-     * todo el mapa curricular. Es solo lectura: las materias ahora se
-     * asignan a su cuatrimestre en el momento en que se crean (ver
-     * ServicioMateria), no desde aquí.
-     */
+
+
     public LinkedHashMap<PlanCuatrimestre, ArrayList<Materia>> mapaCurricular(int idPlan)
     {
         LinkedHashMap<PlanCuatrimestre, ArrayList<Materia>> mapa = new LinkedHashMap<>();

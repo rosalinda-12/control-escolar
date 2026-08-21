@@ -7,8 +7,7 @@ public class DocenteAsignacion
     private String nombreDocente;
     private int idGrupoMateria;
 
-    // Campos de solo lectura (vienen del JOIN) para mostrar en "Mis grupos"
-    // del panel del maestro sin tener que hacer consultas aparte.
+
     private int idGrupo;
     private String nombreGrupo;
     private String nombreMateria;
@@ -16,6 +15,7 @@ public class DocenteAsignacion
     private int idPeriodo;
     private String nombrePeriodo;
     private String estatusGrupo;
+    private String estatusPeriodo;
     private Integer parcialActivo;
 
     public int getIdGrupo()
@@ -86,6 +86,16 @@ public class DocenteAsignacion
     public void setEstatusGrupo(String estatusGrupo)
     {
         this.estatusGrupo = estatusGrupo;
+    }
+
+    public String getEstatusPeriodo()
+    {
+        return estatusPeriodo;
+    }
+
+    public void setEstatusPeriodo(String estatusPeriodo)
+    {
+        this.estatusPeriodo = estatusPeriodo;
     }
 
     public Integer getParcialActivo()

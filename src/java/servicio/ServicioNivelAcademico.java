@@ -47,4 +47,21 @@ public class ServicioNivelAcademico
         servicioBitacora.registrarBaja(responsable, "niveles_academicos", idNivel,
                 "Baja de nivel académico " + (nivel != null ? nivel.getNombreNivel() : idNivel));
     }
+
+    public ResultadoSimple actualizar(NivelAcademico nivel, Usuario responsable)
+    {
+        NivelAcademico anterior = daoNivel.buscarPorId(nivel.getIdNivel());
+        if (anterior == null)
+        {
+            return ResultadoSimple.fallo("El nivel académico ya no existe.");
+        }
+        if (!anterior.getNombreNivel().equals(nivel.getNombreNivel()) && daoNivel.existeNombre(nivel.getNombreNivel()))
+        {
+            return ResultadoSimple.fallo("Ya existe un nivel académico con ese nombre.");
+        }
+        daoNivel.actualizar(nivel);
+        servicioBitacora.registrarAlta(responsable, "niveles_academicos", nivel.getIdNivel(),
+                "Actualizó nivel académico de " + anterior.getNombreNivel() + " a " + nivel.getNombreNivel());
+        return ResultadoSimple.exito(nivel.getIdNivel());
+    }
 }

@@ -11,12 +11,6 @@ import servicio.ServicioAutorizacion;
 import servicio.ServicioCalificacion;
 import java.io.IOException;
 
-/**
- * Calificaciones para el Subdirector: SOLO CONSULTA (no puede editar ni
- * eliminar) y SOLO de la carrera que tiene asignada. El id_carrera nunca
- * se toma de un parámetro de la petición, siempre de usuarioSesion, para
- * que no sea posible ver otra carrera manipulando la URL.
- */
 @WebServlet("/subdirector/SCalificaciones")
 public class ServletSubdirectorCalificaciones extends HttpServlet
 {
@@ -32,7 +26,7 @@ public class ServletSubdirectorCalificaciones extends HttpServlet
             return;
         }
 
-        if (usuarioSesion.getIdCarrera() == null)
+        if (usuarioSesion.getIdsCarrera().isEmpty())
         {
             solicitud.setAttribute("error", "Tu cuenta de Subdirector no tiene una carrera asignada. Pide al Administrador que la configure.");
             solicitud.setAttribute("calificaciones", new java.util.ArrayList<>());
@@ -41,7 +35,7 @@ public class ServletSubdirectorCalificaciones extends HttpServlet
         }
 
         solicitud.setAttribute("calificaciones",
-                new ServicioCalificacion().listarParaAdmin(usuarioSesion.getIdCarrera()));
+                new ServicioCalificacion().listarParaCarreras(usuarioSesion.getIdsCarrera()));
         solicitud.getServletContext().getRequestDispatcher("/subdirector/calificaciones.jsp").forward(solicitud, respuesta);
     }
 }

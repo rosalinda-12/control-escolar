@@ -43,6 +43,26 @@ public class ServletUsuarios extends HttpServlet
 
         String accion = solicitud.getParameter("accion");
 
+        if ("Agregar".equals(accion))
+        {
+            if (!autorizacion.autorizarOResponder403(respuesta, responsable, "usuarios.gestionar")) return;
+            Integer idCarrera = parametroEnteroOpcional(solicitud, "selCarreraNuevo");
+            ResultadoSimple resultado = servicioUsuario.agregarCuenta(
+                solicitud.getParameter("tfNombresNuevo"), solicitud.getParameter("tfApellidoPaternoNuevo"),
+                solicitud.getParameter("tfApellidoMaternoNuevo"), solicitud.getParameter("tfCorreoNuevo"),
+                solicitud.getParameter("tfContrasenaNuevo"), Integer.parseInt(solicitud.getParameter("selRolNuevo")),
+                idCarrera, responsable);
+            if (!resultado.isExito())
+            {
+                solicitud.setAttribute("error", resultado.getMensajeError());
+                solicitud.setAttribute("abrirAgregar", true);
+            }
+            else solicitud.setAttribute("exito", "Cuenta agregada correctamente.");
+            cargarDatosFormulario(solicitud);
+            solicitud.getServletContext().getRequestDispatcher("/admin/usuarios.jsp").forward(solicitud, respuesta);
+            return;
+        }
+
         if ("Eliminar".equals(accion))
         {
             if (!autorizacion.autorizarOResponder403(respuesta, responsable, "usuarios.eliminar"))
@@ -86,10 +106,6 @@ public class ServletUsuarios extends HttpServlet
             return;
         }
 
-        // Ya no existe alta directa de cuentas desde aquí: toda cuenta
-        // nueva se crea vía autoregistro (SRegistro) una vez que la
-        // persona (Alumno/Docente/Subdirector) fue dada de alta, y queda
-        // pendiente de aprobación en SSolicitudesRegistro.
         respuesta.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción no reconocida.");
     }
 

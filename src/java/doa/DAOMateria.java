@@ -12,17 +12,15 @@ import java.util.ArrayList;
 public class DAOMateria
 {
     private static final String SELECCION_BASE =
-            "SELECT m.id_materia, m.nombre_materia, m.estatus, m.id_plan_cuatrimestre, "
+            "SELECT m.id_materia, m.nombre_materia, m.estatus, m.id_plan_cuatrimestre, m.pdf_temario, "
             + "pc.numero_cuatrimestre, pe.nombre_plan, c.id_carrera, c.nombre_carrera "
             + "FROM materias m "
             + "JOIN plan_cuatrimestres pc ON m.id_plan_cuatrimestre = pc.id_plan_cuatrimestre "
             + "JOIN planes_estudio pe ON pc.id_plan = pe.id_plan "
             + "JOIN carreras c ON pe.id_carrera = c.id_carrera ";
 
-    /**
-     * Materias de una sola carrera (activas), para el panel del
-     * Subdirector.
-     */
+
+
     public ArrayList<Materia> listarPorCarrera(int idCarrera)
     {
         ArrayList<Materia> lista = new ArrayList<>();
@@ -93,11 +91,8 @@ public class DAOMateria
         return lista;
     }
 
-    /**
-     * Materias ya ligadas a un cuatrimestre concreto de un plan. Sustituye a
-     * la antigua tabla puente plan_cuatrimestre_materias: ahora la relación
-     * vive directamente en la materia.
-     */
+
+
     public ArrayList<Materia> listarPorPlanCuatrimestre(int idPlanCuatrimestre)
     {
         ArrayList<Materia> lista = new ArrayList<>();
@@ -149,11 +144,8 @@ public class DAOMateria
         return null;
     }
 
-    /**
-     * El nombre ya no tiene que ser único en todo el catálogo: como cada
-     * materia vive en un solo cuatrimestre, lo único que no debe repetirse
-     * es el mismo nombre dos veces dentro de ese mismo cuatrimestre.
-     */
+
+
     public boolean existeNombreEnCuatrimestre(String nombreMateria, int idPlanCuatrimestre, Integer idMateriaExcluir)
     {
         String sql = "SELECT COUNT(*) FROM materias WHERE nombre_materia = ? AND id_plan_cuatrimestre = ?"
@@ -212,10 +204,8 @@ public class DAOMateria
         return 0;
     }
 
-    /**
-     * Solo nombre y estatus son modificables: el cuatrimestre/plan al que
-     * quedó ligada la materia se fija desde el alta y ya no cambia.
-     */
+
+
     public void modificar(Materia materia)
     {
         String sql = "UPDATE materias SET nombre_materia = ?, estatus = ? WHERE id_materia = ?";
@@ -250,6 +240,25 @@ public class DAOMateria
         }
     }
 
+
+
+    public void actualizarPdf(int idMateria, String rutaArchivo)
+    {
+        String sql = "UPDATE materias SET pdf_temario = ? WHERE id_materia = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, rutaArchivo);
+            sentencia.setInt(2, idMateria);
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     private Materia construirMateria(ResultSet resultado) throws SQLException
     {
         Materia materia = new Materia();
@@ -257,6 +266,7 @@ public class DAOMateria
         materia.setNombreMateria(resultado.getString("nombre_materia"));
         materia.setEstatus(resultado.getString("estatus"));
         materia.setIdPlanCuatrimestre(resultado.getInt("id_plan_cuatrimestre"));
+        materia.setPdfTemario(resultado.getString("pdf_temario"));
         materia.setNumeroCuatrimestre(resultado.getInt("numero_cuatrimestre"));
         materia.setNombrePlan(resultado.getString("nombre_plan"));
         materia.setIdCarrera(resultado.getInt("id_carrera"));

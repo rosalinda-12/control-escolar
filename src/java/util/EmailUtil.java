@@ -30,6 +30,26 @@ public class EmailUtil
         enviarCorreo(correoDestino, "Recuperación de contraseña - Control Escolar", cuerpo);
     }
 
+    public static void enviarResultadoSolicitud(String correoDestino, String nombreDestino, boolean aprobada, String rol)
+    {
+        String estado = aprobada ? "aprobada" : "rechazada";
+        String cuerpo = "Hola " + nombreDestino + ",\n\nTu solicitud de registro como " + rol + " fue " + estado
+                + ".\n\nPuedes ingresar al sistema para consultar el siguiente paso.";
+        enviarCorreo(correoDestino, "Resultado de solicitud - Control Escolar", cuerpo);
+    }
+
+    public static void enviarBoletaLista(String correoDestino, String nombreDestino, String periodo)
+    {
+        enviarCorreo(correoDestino, "Boleta disponible - Control Escolar",
+                "Hola " + nombreDestino + ",\n\nTu boleta del periodo " + periodo + " ya está disponible para consulta.");
+    }
+
+    public static void enviarCambioTrayectoria(String correoDestino, String nombreDestino, String estado)
+    {
+        enviarCorreo(correoDestino, "Actualización de trayectoria académica - Control Escolar",
+                "Hola " + nombreDestino + ",\n\nTu trayectoria académica fue actualizada. Estado actual: " + estado + ".");
+    }
+
     private static void enviarCorreo(String correoDestino, String asunto, String cuerpo)
     {
         Properties propiedades = new Properties();

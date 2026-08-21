@@ -12,8 +12,8 @@ import java.util.ArrayList;
 public class DAOInscripcion
 {
     private static final String SELECCION_BASE =
-            "SELECT i.id_inscripcion, i.id_trayectoria, t.matricula, "
-            + "CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) AS nombre_alumno, "
+            "SELECT i.id_inscripcion, i.id_trayectoria, t.id_alumno, t.matricula, "
+            + "CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) AS nombre_alumno, a.estatus AS estatus_alumno, "
             + "i.id_grupo, g.nombre_grupo, c.nombre_carrera, i.id_periodo, pr.nombre_periodo, i.fecha_inscripcion, i.estado "
             + "FROM inscripciones i "
             + "JOIN trayectorias_academicas t ON i.id_trayectoria = t.id_trayectoria "
@@ -47,11 +47,8 @@ public class DAOInscripcion
         return lista;
     }
 
-    /**
-     * Solo las inscripciones activas, para la vista por defecto: con muchos
-     * alumnos el historial completo (bajas de ciclos pasados, reinscripciones
-     * viejas, etc.) hace la tabla inmanejable.
-     */
+
+
     public ArrayList<Inscripcion> listarActivas()
     {
         ArrayList<Inscripcion> lista = new ArrayList<>();
@@ -74,19 +71,21 @@ public class DAOInscripcion
         return lista;
     }
 
-    /**
-     * Historial completo (activas y bajas) de una sola matrícula, para cuando
-     * el admin busca a un alumno puntual.
-     */
-    public ArrayList<Inscripcion> listarPorMatricula(String matricula)
+
+
+    public ArrayList<Inscripcion> listarPorAlumno(String busqueda)
     {
         ArrayList<Inscripcion> lista = new ArrayList<>();
-        String sql = SELECCION_BASE + "WHERE t.matricula = ? ORDER BY i.fecha_inscripcion DESC";
+        String sql = SELECCION_BASE
+                + "WHERE t.matricula LIKE ? OR CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) LIKE ? "
+                + "ORDER BY i.fecha_inscripcion DESC";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql))
         {
-            sentencia.setString(1, matricula);
+            String parametro = "%" + busqueda + "%";
+            sentencia.setString(1, parametro);
+            sentencia.setString(2, parametro);
 
             try (ResultSet resultado = sentencia.executeQuery())
             {
@@ -158,11 +157,8 @@ public class DAOInscripcion
         return 0;
     }
 
-    /**
-     * Cierra (pasa a 'Baja') cualquier inscripción que siga 'Activa' para esa
-     * trayectoria. Se usa al reinscribir: la trayectoria solo debe tener una
-     * inscripción activa a la vez, la más reciente.
-     */
+
+
     public void finalizarActivasDeTrayectoria(int idTrayectoria)
     {
         String sql = "UPDATE inscripciones SET estado = 'Baja' WHERE id_trayectoria = ? AND estado = 'Activa'";
@@ -201,8 +197,10 @@ public class DAOInscripcion
         Inscripcion inscripcion = new Inscripcion();
         inscripcion.setIdInscripcion(resultado.getInt("id_inscripcion"));
         inscripcion.setIdTrayectoria(resultado.getInt("id_trayectoria"));
+        inscripcion.setIdAlumno(resultado.getInt("id_alumno"));
         inscripcion.setMatricula(resultado.getString("matricula"));
         inscripcion.setNombreAlumno(resultado.getString("nombre_alumno"));
+        inscripcion.setEstatusAlumno(resultado.getString("estatus_alumno"));
         inscripcion.setIdGrupo(resultado.getInt("id_grupo"));
         inscripcion.setNombreGrupo(resultado.getString("nombre_grupo"));
         inscripcion.setNombreCarrera(resultado.getString("nombre_carrera"));

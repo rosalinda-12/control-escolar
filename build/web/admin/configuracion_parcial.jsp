@@ -25,6 +25,13 @@
             <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
             <% } %>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyConfigParcial">
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoConfigParcial">Buscar</label>
+                    <input type="text" id="filtroTextoConfigParcial" class="form-control form-control-sm" data-filtro-texto placeholder="Periodo...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -35,9 +42,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyConfigParcial">
                         <% for (ConfiguracionParcial configuracion : configuraciones) { %>
-                        <tr>
+                        <tr data-fila-filtrable>
                             <td><%= configuracion.getNombrePeriodo()%></td>
                             <td><span class="badge-estatus badge-aprobado">Parcial <%= configuracion.getParcialActivo()%></span></td>
                             <td><%= configuracion.getFechaActualizacion()%></td>
@@ -56,6 +63,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con la búsqueda.</div>
             </div>
         </div>
 

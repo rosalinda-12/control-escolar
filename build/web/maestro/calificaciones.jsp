@@ -1,8 +1,12 @@
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.DocenteAsignacion"%>
 <%@page import="java.util.ArrayList"%>
+<%@page import="java.util.HashSet"%>
+<%@page import="java.util.Set"%>
 <%
     ArrayList<DocenteAsignacion> asignaciones = (ArrayList<DocenteAsignacion>) request.getAttribute("asignaciones");
+    Set<Integer> periodosMostrados = new HashSet<>();
+    Set<String> carrerasMostradas = new HashSet<>();
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -29,6 +33,30 @@
             <% if (asignaciones.isEmpty()) { %>
             <div class="mensaje-exito mt-4">Todavía no tienes materias de grupo asignadas. Pide al Administrador que te asigne alguna.</div>
             <% } else { %>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="filtroPeriodoDocente" class="form-label">Filtrar por periodo</label>
+                    <select id="filtroPeriodoDocente" class="form-select">
+                        <option value="">Todos los periodos</option>
+                        <% for (DocenteAsignacion asignacion : asignaciones) { %>
+                            <% if (periodosMostrados.add(asignacion.getIdPeriodo())) { %>
+                        <option value="<%= asignacion.getIdPeriodo() %>"><%= asignacion.getNombrePeriodo() %></option>
+                            <% } %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="filtroCarreraDocente" class="form-label">Filtrar por carrera</label>
+                    <select id="filtroCarreraDocente" class="form-select">
+                        <option value="">Todas las carreras</option>
+                        <% for (DocenteAsignacion asignacion : asignaciones) { %>
+                            <% if (carrerasMostradas.add(asignacion.getNombreCarrera())) { %>
+                        <option value="<%= asignacion.getNombreCarrera() %>"><%= asignacion.getNombreCarrera() %></option>
+                            <% } %>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -43,7 +71,7 @@
                     </thead>
                     <tbody>
                         <% for (DocenteAsignacion asignacion : asignaciones) { %>
-                        <tr>
+                        <tr data-periodo="<%= asignacion.getIdPeriodo() %>" data-carrera="<%= asignacion.getNombreCarrera() %>">
                             <td><%= asignacion.getNombreMateria()%></td>
                             <td><%= asignacion.getNombreGrupo()%>
                                 <% if ("Cerrado".equals(asignacion.getEstatusGrupo())) { %>
@@ -61,7 +89,7 @@
                             </td>
                             <td class="text-end">
                                 <a href="SCalificaciones?idGrupoMateria=<%= asignacion.getIdGrupoMateria()%>" class="btn btn-sm btn-primary-formal">
-                                    <i class="bi bi-journal-check me-1"></i>Capturar
+                                    <i class="bi bi-journal-check me-1"></i><%= "Activo".equals(asignacion.getEstatusGrupo()) && "Activo".equals(asignacion.getEstatusPeriodo()) ? "Capturar" : "Ver calificaciones" %>
                                 </a>
                             </td>
                         </tr>
@@ -72,6 +100,19 @@
             <% } %>
         </div>
 
+        <script>
+            const filtroPeriodoDocente = document.getElementById('filtroPeriodoDocente');
+            const filtroCarreraDocente = document.getElementById('filtroCarreraDocente');
+            const filasDocente = document.querySelectorAll('tbody tr[data-periodo]');
+            function filtrarAsignacionesDocente() {
+                filasDocente.forEach((fila) => {
+                    fila.hidden = (filtroPeriodoDocente.value && fila.dataset.periodo !== filtroPeriodoDocente.value)
+                            || (filtroCarreraDocente.value && fila.dataset.carrera !== filtroCarreraDocente.value);
+                });
+            }
+            filtroPeriodoDocente.addEventListener('change', filtrarAsignacionesDocente);
+            filtroCarreraDocente.addEventListener('change', filtrarAsignacionesDocente);
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
             </main>

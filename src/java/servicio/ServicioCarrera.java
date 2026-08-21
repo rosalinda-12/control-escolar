@@ -60,12 +60,8 @@ public class ServicioCarrera
         return ResultadoCarrera.exito(carrera.getIdCarrera());
     }
 
-    /**
-     * Una carrera con planes de estudio asociados nunca se elimina físicamente
-     * (rompería el historial de trayectorias y grupos ya creados). En ese caso
-     * solo se desactiva para que deje de estar disponible al crear planes,
-     * grupos o alumnos nuevos.
-     */
+
+
     public ResultadoCarrera eliminarODesactivar(int idCarrera, Usuario responsable)
     {
         Carrera carrera = daoCarrera.buscarPorId(idCarrera);

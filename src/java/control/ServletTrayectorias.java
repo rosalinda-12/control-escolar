@@ -8,10 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import modelo.TrayectoriaAcademica;
 import modelo.Usuario;
+import modelo.BoletaCuatrimestre;
 import servicio.ResultadoSimple;
 import servicio.ServicioAlumno;
 import servicio.ServicioPlanEstudio;
 import servicio.ServicioTrayectoria;
+import servicio.ServicioCalificacion;
+import java.util.ArrayList;
 import java.io.IOException;
 
 @WebServlet("/admin/STrayectorias")
@@ -20,11 +23,20 @@ public class ServletTrayectorias extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
-        int idAlumno = Integer.parseInt(solicitud.getParameter("idAlumno"));
+        String idAlumnoTexto = solicitud.getParameter("idAlumno");
+        if (idAlumnoTexto == null || idAlumnoTexto.isEmpty())
+        {
+            int idTrayectoria = Integer.parseInt(solicitud.getParameter("idTrayectoria"));
+            TrayectoriaAcademica trayectoria = new ServicioTrayectoria().buscarPorId(idTrayectoria);
+            idAlumnoTexto = String.valueOf(trayectoria.getIdAlumno());
+        }
+        int idAlumno = Integer.parseInt(idAlumnoTexto);
 
         solicitud.setAttribute("alumno", new ServicioAlumno().buscarPorId(idAlumno));
         solicitud.setAttribute("trayectorias", new ServicioTrayectoria().listarPorAlumno(idAlumno));
         solicitud.setAttribute("planes", new ServicioPlanEstudio().listarVigentes());
+        ArrayList<BoletaCuatrimestre> boleta = new ServicioCalificacion().obtenerBoletaAlumno(idAlumno);
+        solicitud.setAttribute("boleta", boleta);
 
         solicitud.getServletContext().getRequestDispatcher("/admin/trayectorias.jsp").forward(solicitud, respuesta);
     }
@@ -38,17 +50,21 @@ public class ServletTrayectorias extends HttpServlet
         int idAlumno = Integer.parseInt(solicitud.getParameter("idAlumno"));
         ServicioTrayectoria servicioTrayectoria = new ServicioTrayectoria();
 
-        if ("Pausar".equals(accion))
+        if ("BajaTemporal".equals(accion))
         {
-            servicioTrayectoria.pausar(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
+            servicioTrayectoria.bajaTemporal(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
         }
         else if ("Reanudar".equals(accion))
         {
             servicioTrayectoria.reanudar(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
         }
-        else if ("Cerrar".equals(accion))
+        else if ("BajaDefinitiva".equals(accion))
         {
-            servicioTrayectoria.cerrar(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
+            servicioTrayectoria.bajaDefinitiva(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
+        }
+        else if ("RevertirBaja".equals(accion))
+        {
+            servicioTrayectoria.revertirBajaDefinitiva(Integer.parseInt(solicitud.getParameter("idTrayectoria")), responsable);
         }
         else
         {
@@ -71,6 +87,7 @@ public class ServletTrayectorias extends HttpServlet
                 solicitud.setAttribute("alumno", new ServicioAlumno().buscarPorId(idAlumno));
                 solicitud.setAttribute("trayectorias", servicioTrayectoria.listarPorAlumno(idAlumno));
                 solicitud.setAttribute("planes", new ServicioPlanEstudio().listarVigentes());
+                solicitud.setAttribute("boleta", new ServicioCalificacion().obtenerBoletaAlumno(idAlumno));
                 solicitud.getServletContext().getRequestDispatcher("/admin/trayectorias.jsp").forward(solicitud, respuesta);
                 return;
             }

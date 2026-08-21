@@ -27,9 +27,27 @@ public class ServicioGrupo
         return daoGrupo.listar();
     }
 
+    public ArrayList<Grupo> listarActivosParaInscripcion()
+    {
+        return daoGrupo.listarActivosParaInscripcion();
+    }
+
     public Grupo buscarPorId(int idGrupo)
     {
         return daoGrupo.buscarPorId(idGrupo);
+    }
+
+    public ResultadoSimple actualizar(Grupo grupo, Usuario responsable)
+    {
+        Grupo anterior = daoGrupo.buscarPorId(grupo.getIdGrupo());
+        if (anterior == null) return ResultadoSimple.fallo("El grupo ya no existe.");
+        if (!anterior.getNombreGrupo().equals(grupo.getNombreGrupo()) && daoGrupo.existeNombreEnPeriodo(grupo.getNombreGrupo(), grupo.getIdPeriodo()))
+        {
+            return ResultadoSimple.fallo("Ya existe un grupo con ese nombre en ese periodo.");
+        }
+        daoGrupo.actualizar(grupo);
+        servicioBitacora.registrarAlta(responsable, "grupos", grupo.getIdGrupo(), "Actualizó el grupo " + grupo.getNombreGrupo());
+        return ResultadoSimple.exito(grupo.getIdGrupo());
     }
 
     public ResultadoSimple agregar(Grupo grupo, Usuario responsable)

@@ -13,9 +13,18 @@ import java.io.IOException;
 @WebServlet("/SCambioContrasena")
 public class ServletCambioContrasena extends HttpServlet
 {
+    private static final String ATRIBUTO_USUARIO = "usuario";
+
     @Override
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
+        HttpSession sesion = solicitud.getSession(false);
+        if (sesion == null || sesion.getAttribute(ATRIBUTO_USUARIO) == null)
+        {
+            respuesta.sendRedirect(solicitud.getContextPath() + "/SLogin");
+            return;
+        }
+
         solicitud.getServletContext().getRequestDispatcher("/cambio_contrasena.jsp").forward(solicitud, respuesta);
     }
 
@@ -23,7 +32,13 @@ public class ServletCambioContrasena extends HttpServlet
     protected void doPost(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
         HttpSession sesion = solicitud.getSession(false);
-        Usuario usuario = (Usuario) sesion.getAttribute("usuario");
+        if (sesion == null || sesion.getAttribute(ATRIBUTO_USUARIO) == null)
+        {
+            respuesta.sendRedirect(solicitud.getContextPath() + "/SLogin");
+            return;
+        }
+
+        Usuario usuario = (Usuario) sesion.getAttribute(ATRIBUTO_USUARIO);
 
         String accion = solicitud.getParameter("accion");
         ServicioCambioContrasena servicioCambioContrasena = new ServicioCambioContrasena();
@@ -54,9 +69,13 @@ public class ServletCambioContrasena extends HttpServlet
 
     private void redirigirAPanel(HttpServletRequest solicitud, HttpServletResponse respuesta, Usuario usuario) throws IOException
     {
-        if (usuario.esAdministrador())
+        if (usuario.puedeEntrarAAreaAdmin())
         {
             respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SPanel");
+        }
+        else if (usuario.esSubdirector())
+        {
+            respuesta.sendRedirect(solicitud.getContextPath() + "/subdirector/SPanel");
         }
         else if (usuario.esMaestro())
         {

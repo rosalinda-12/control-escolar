@@ -1,15 +1,14 @@
+<%@page pageEncoding="UTF-8"%>
 <%@page import="modelo.Usuario"%>
 <%@page import="jakarta.servlet.RequestDispatcher"%>
 <%@page import="servicio.ServicioAutorizacion"%>
 <%@page import="servicio.ServicioAprobacionRegistro"%>
+<%@page import="java.util.ArrayList"%>
 <%
     Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
     Object uriOriginal = request.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI);
     String uriActual = uriOriginal != null ? uriOriginal.toString() : request.getRequestURI();
 
-    // Los enlaces se ocultan según permiso, pero eso es solo comodidad
-    // visual: cada Servlet vuelve a validar el permiso por su cuenta y
-    // responde 403 si alguien entra directo por la URL sin tenerlo.
     ServicioAutorizacion autorizacion = new ServicioAutorizacion();
     boolean puedeCarreras = autorizacion.tienePermiso(usuarioSesion, "carreras.ver");
     boolean puedeMaterias = autorizacion.tienePermiso(usuarioSesion, "materias.ver");
@@ -21,20 +20,22 @@
     boolean puedeSolicitudes = autorizacion.tienePermiso(usuarioSesion, "usuarios.aprobar_registro");
     boolean puedeSubdirectores = autorizacion.tienePermiso(usuarioSesion, "subdirectores.ver");
     boolean puedeCalificaciones = autorizacion.tienePermiso(usuarioSesion, "calificaciones.ver");
+    boolean puedeAutomatizaciones = autorizacion.puedeGestionarAutomatizaciones(usuarioSesion);
 
-    int totalSolicitudesPendientes = puedeSolicitudes ? new ServicioAprobacionRegistro().listarPendientes().size() : 0;
+    ArrayList<Usuario> solicitudesMenuPendientes = puedeSolicitudes ? new ServicioAprobacionRegistro().listarPendientes() : new ArrayList<Usuario>();
+    int totalSolicitudesMenu = solicitudesMenuPendientes.size();
 
     String iniciales = "" + (usuarioSesion.getNombres() != null && !usuarioSesion.getNombres().isEmpty() ? usuarioSesion.getNombres().charAt(0) : '?')
             + (usuarioSesion.getApellidoPaterno() != null && !usuarioSesion.getApellidoPaterno().isEmpty() ? usuarioSesion.getApellidoPaterno().charAt(0) : "");
 %>
 <script>(function(){try{var t=localStorage.getItem("ce-tema");if(!t){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
-<div class="app-shell">
+<div class="app-shell <%= usuarioSesion.esControlEscolar() ? "modo-consulta" : ""%>">
     <aside class="sidebar">
         <a class="sidebar-brand" href="SPanel">
-            
+
             <span class="sidebar-brand-text">
                 <span>CONTROL ESCOLAR</span>
-                
+
             </span>
         </a>
 
@@ -46,64 +47,94 @@
             <% if (puedeSolicitudes) { %>
             <a class="sidebar-link <%= uriActual.contains("SSolicitudesRegistro") ? "active" : ""%>" href="SSolicitudesRegistro">
                 <i class="bi bi-file-earmark-check"></i>Solicitudes
-                <% if (totalSolicitudesPendientes > 0) { %>
-                <span class="badge-conteo"><%= totalSolicitudesPendientes%></span>
+                <% if (totalSolicitudesMenu > 0) { %>
+                <span class="badge-conteo"><%= totalSolicitudesMenu%></span>
                 <% } %>
             </a>
             <% } %>
 
-            <% if (puedeCarreras || puedeMaterias) { %>
-            <details class="sidebar-group" <%= (uriActual.contains("SCarreras") || uriActual.contains("SPlanes") || uriActual.contains("SNiveles") || uriActual.contains("SCurriculo") || uriActual.contains("SMaterias")) ? "open" : ""%>>
-                <summary class="sidebar-link"><i class="bi bi-mortarboard"></i>Académico</summary>
+
+            <details class="sidebar-group" <%= (uriActual.contains("SCiclos") || uriActual.contains("SNiveles") || uriActual.contains("SCarreras") || uriActual.contains("SGeneraciones") || uriActual.contains("SPeriodos")) ? "open" : ""%>>
+                <summary class="sidebar-link"><i class="bi bi-collection"></i>CONFIGURACI&Oacute;N ACAD&Eacute;MICA</summary>
                 <div class="sidebar-subnav">
                     <% if (puedeCarreras) { %>
                     <a class="sidebar-link <%= uriActual.contains("SCarreras") ? "active" : ""%>" href="SCarreras">Carreras</a>
                     <% } %>
+                    <a class="sidebar-link <%= uriActual.contains("SNiveles") ? "active" : ""%>" href="SNiveles">Niveles acad&eacute;micos</a>
+                    <a class="sidebar-link <%= uriActual.contains("SCiclos") ? "active" : ""%>" href="SCiclos">Ciclos escolares</a>
+                    <a class="sidebar-link <%= uriActual.contains("SPeriodos") ? "active" : ""%>" href="SPeriodos">Periodos escolares</a>
+                    <a class="sidebar-link <%= uriActual.contains("SGeneraciones") ? "active" : ""%>" href="SGeneraciones">Generaciones</a>
+                </div>
+            </details>
+
+
+            <details class="sidebar-group" <%= (uriActual.contains("SPlanes") || uriActual.contains("SCurriculo") || uriActual.contains("SMaterias")) ? "open" : ""%>>
+                <summary class="sidebar-link"><i class="bi bi-mortarboard"></i>GESTI&Oacute;N ACAD&Eacute;MICA</summary>
+                <div class="sidebar-subnav">
                     <a class="sidebar-link <%= uriActual.contains("SPlanes") ? "active" : ""%>" href="SPlanes">Planes de estudio</a>
-                    <a class="sidebar-link <%= uriActual.contains("SNiveles") ? "active" : ""%>" href="SNiveles">Niveles académicos</a>
-                    <a class="sidebar-link <%= uriActual.contains("SCurriculo") ? "active" : ""%>" href="SCurriculo">Currículo</a>
+                    <a class="sidebar-link <%= uriActual.contains("SCurriculo") ? "active" : ""%>" href="SCurriculo">Curr&iacute;culo</a>
                     <% if (puedeMaterias) { %>
                     <a class="sidebar-link <%= uriActual.contains("SMaterias") ? "active" : ""%>" href="SMaterias">Materias</a>
                     <% } %>
                 </div>
             </details>
-            <% } %>
 
-            <details class="sidebar-group" <%= (uriActual.contains("SAlumnos") || uriActual.contains("SInscripciones") || uriActual.contains("SGrupos") || uriActual.contains("SPeriodos") || uriActual.contains("SCiclos") || uriActual.contains("SGeneraciones")) ? "open" : ""%>>
-                <summary class="sidebar-link"><i class="bi bi-journal-bookmark"></i>Control escolar</summary>
+
+            <details class="sidebar-group" <%= (uriActual.contains("SGrupos") || uriActual.contains("SDocentes") || uriActual.contains("SAsignaciones") || uriActual.contains("SSubdirectores")) ? "open" : ""%>>
+                <summary class="sidebar-link"><i class="bi bi-person-workspace"></i>GESTI&Oacute;N ESCOLAR</summary>
                 <div class="sidebar-subnav">
-                    <a class="sidebar-link <%= uriActual.contains("SAlumnos") ? "active" : ""%>" href="SAlumnos">Alumnos</a>
-                    <a class="sidebar-link <%= uriActual.contains("SInscripciones") ? "active" : ""%>" href="SInscripciones">Inscripciones / Reinscripciones</a>
+                    <% if (puedeDocentes) { %>
+                    <a class="sidebar-link <%= uriActual.contains("SDocentes") ? "active" : ""%>" href="SDocentes">Docentes</a>
+                    <% } %>
+                    <% if (puedeSubdirectores) { %>
+                    <a class="sidebar-link <%= uriActual.contains("SSubdirectores") ? "active" : ""%>" href="SSubdirectores">Subdirectores</a>
+                    <% } %>
                     <% if (puedeGrupos) { %>
                     <a class="sidebar-link <%= uriActual.contains("SGrupos") ? "active" : ""%>" href="SGrupos">Grupos</a>
                     <% } %>
-                    <a class="sidebar-link <%= uriActual.contains("SPeriodos") ? "active" : ""%>" href="SPeriodos">Periodos</a>
-                    <a class="sidebar-link <%= uriActual.contains("SCiclos") ? "active" : ""%>" href="SCiclos">Ciclos escolares</a>
-                    <a class="sidebar-link <%= uriActual.contains("SGeneraciones") ? "active" : ""%>" href="SGeneraciones">Generaciones</a>
+                    <% if (puedeDocentes) { %>
+                    <a class="sidebar-link <%= uriActual.contains("SAsignaciones") ? "active" : ""%>" href="SAsignaciones">Asignaciones de docentes</a>
+                    <% } %>
+                </div>
+            </details>
+
+
+            <a class="sidebar-link <%= uriActual.contains("SConfiguracionParcial") ? "active" : ""%>" href="SConfiguracionParcial">
+                <i class="bi bi-toggles"></i>Configuraci&oacute;n del parcial
+            </a>
+
+
+            <details class="sidebar-group" <%= (uriActual.contains("SAlumnos") || uriActual.contains("SInscripciones") || uriActual.contains("SCalificaciones")) ? "open" : ""%>>
+                <summary class="sidebar-link"><i class="bi bi-journal-bookmark"></i>Gesti&oacute;n de alumnos</summary>
+                <div class="sidebar-subnav">
+                    <a class="sidebar-link <%= uriActual.contains("SAlumnos") ? "active" : ""%>" href="SAlumnos">Alumnos</a>
+                    <a class="sidebar-link <%= uriActual.contains("SInscripciones") ? "active" : ""%>" href="SInscripciones">Inscripciones y reinscripciones</a>
                     <% if (puedeCalificaciones) { %>
                     <a class="sidebar-link <%= uriActual.contains("SCalificaciones") ? "active" : ""%>" href="SCalificaciones">Calificaciones</a>
                     <% } %>
                 </div>
             </details>
 
-            <% if (puedeDocentes || puedeSubdirectores) { %>
-            <details class="sidebar-group" <%= (uriActual.contains("SDocentes") || uriActual.contains("SAsignaciones") || uriActual.contains("SSubdirectores")) ? "open" : ""%>>
-                <summary class="sidebar-link"><i class="bi bi-person-workspace"></i>Docencia</summary>
+            <% if (puedeAutomatizaciones) { %>
+
+            <details class="sidebar-group" <%= uriActual.contains("SAutomatizaciones") || uriActual.contains("SValidacionAcademica") || uriActual.contains("SInscripcionMasiva") || uriActual.contains("SAvanceNivel") ? "open" : ""%>>
+                <summary class="sidebar-link"><i class="bi bi-magic"></i>Automatizaciones</summary>
                 <div class="sidebar-subnav">
-                    <% if (puedeDocentes) { %>
-                    <a class="sidebar-link <%= uriActual.contains("SDocentes") ? "active" : ""%>" href="SDocentes">Docentes</a>
-                    <a class="sidebar-link <%= uriActual.contains("SAsignaciones") ? "active" : ""%>" href="SGrupos">Asignaciones (desde Grupos)</a>
-                    <% } %>
-                    <% if (puedeSubdirectores) { %>
-                    <a class="sidebar-link <%= uriActual.contains("SSubdirectores") ? "active" : ""%>" href="SSubdirectores">Subdirectores</a>
-                    <% } %>
+                    <a class="sidebar-link <%= uriActual.contains("SAutomatizaciones") ? "active" : ""%>" href="SAutomatizaciones">
+                        <i class="bi bi-calendar2-check"></i>Cierre de periodo
+                    </a>
+                    <a class="sidebar-link <%= uriActual.contains("SValidacionAcademica") ? "active" : ""%>" href="SValidacionAcademica">
+                        <i class="bi bi-clipboard2-pulse"></i>Validación académica
+                    </a>
+                    <a class="sidebar-link <%= uriActual.contains("SInscripcionMasiva") ? "active" : ""%>" href="SInscripcionMasiva">
+                        <i class="bi bi-people"></i>Inscripción masiva
+                    </a>
+                    <a class="sidebar-link <%= uriActual.contains("SAvanceNivel") ? "active" : ""%>" href="SAvanceNivel">
+                        <i class="bi bi-arrow-up-circle"></i>Avance de nivel
+                    </a>
                 </div>
             </details>
             <% } %>
-
-            <a class="sidebar-link <%= uriActual.contains("SConfiguracionParcial") ? "active" : ""%>" href="SConfiguracionParcial">
-                <i class="bi bi-toggles"></i>Parcial activo
-            </a>
 
             <% if (puedeUsuarios || puedeRoles || puedePermisos) { %>
             <details class="sidebar-group" <%= (uriActual.contains("SUsuarios") || uriActual.contains("SRoles") || uriActual.contains("SPermisos")) ? "open" : ""%>>
@@ -137,19 +168,45 @@
             <button class="topbar-toggle" type="button" data-toggle-sidebar aria-label="Abrir menú">
                 <i class="bi bi-list"></i>
             </button>
-            <div class="topbar-search">
-                <i class="bi bi-search"></i>
-                <input type="text" data-buscador placeholder="Buscar en el sistema...">
-                <kbd>Ctrl+K</kbd>
-            </div>
             <div class="topbar-actions">
                 <% if (puedeSolicitudes) { %>
-                <a class="icon-btn" href="SSolicitudesRegistro" data-tooltip="Solicitudes pendientes">
-                    <i class="bi bi-bell"></i>
-                    <% if (totalSolicitudesPendientes > 0) { %>
-                    <span class="badge-conteo"><%= totalSolicitudesPendientes%></span>
-                    <% } %>
-                </a>
+                <div class="dropdown">
+                    <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Solicitudes pendientes" data-tooltip="Solicitudes pendientes">
+                        <i class="bi bi-bell"></i>
+                        <% if (totalSolicitudesMenu > 0) { %>
+                        <span class="badge-conteo"><%= totalSolicitudesMenu%></span>
+                        <% } %>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end solicitudes-menu p-0">
+                        <div class="solicitudes-menu-header">
+                            <strong>Solicitudes pendientes</strong>
+                            <span><%= totalSolicitudesMenu%></span>
+                        </div>
+                        <% if (solicitudesMenuPendientes.isEmpty()) { %>
+                        <div class="solicitud-menu-vacia"><i class="bi bi-check2-circle"></i>No hay solicitudes pendientes.</div>
+                        <% } else { %>
+                        <% for (Usuario solicitante : solicitudesMenuPendientes) { %>
+                        <div class="solicitud-menu-item">
+                            <div class="solicitud-menu-datos">
+                                <strong><%= solicitante.getNombres()%> <%= solicitante.getApellidoPaterno()%></strong>
+                                <span><%= solicitante.getCorreo()%></span>
+                                <small><%= solicitante.getNombreRol()%> · <%= solicitante.isCorreoVerificado() ? "Correo verificado" : "Correo sin verificar"%></small>
+                            </div>
+                            <% if (solicitante.isCorreoVerificado()) { %>
+                            <form method="post" action="SSolicitudesRegistro" class="d-inline">
+                                <input type="hidden" name="idUsuario" value="<%= solicitante.getIdUsuario()%>">
+                                <input type="hidden" name="accion" value="Aprobar">
+                                <button type="submit" class="btn btn-sm btn-primary-formal" title="Aceptar usuario"><i class="bi bi-check-lg"></i></button>
+                            </form>
+                            <% } else { %>
+                            <button type="button" class="btn btn-sm btn-outline-formal" disabled title="Debe verificar su correo primero"><i class="bi bi-hourglass-split"></i></button>
+                            <% } %>
+                        </div>
+                        <% } %>
+                        <% } %>
+                        <a class="dropdown-item solicitudes-menu-footer" href="SSolicitudesRegistro">Ver todas las solicitudes <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
                 <% } %>
                 <button type="button" class="icon-btn theme-toggle" data-theme-toggle data-tooltip="Cambiar tema" aria-pressed="false">
                     <i class="bi bi-moon-stars-fill"></i>

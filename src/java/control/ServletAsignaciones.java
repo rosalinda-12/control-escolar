@@ -29,7 +29,17 @@ public class ServletAsignaciones extends HttpServlet
             return;
         }
 
-        int idGrupo = Integer.parseInt(solicitud.getParameter("idGrupo"));
+        String parametroIdGrupo = solicitud.getParameter("idGrupo");
+
+
+        if (parametroIdGrupo == null || parametroIdGrupo.isEmpty())
+        {
+            solicitud.setAttribute("grupos", new ServicioGrupo().listar());
+            solicitud.getServletContext().getRequestDispatcher("/admin/asignaciones.jsp").forward(solicitud, respuesta);
+            return;
+        }
+
+        int idGrupo = Integer.parseInt(parametroIdGrupo);
 
         HttpSession sesion = solicitud.getSession(false);
         if (sesion != null && sesion.getAttribute("errorAsignacion") != null)
@@ -55,16 +65,16 @@ public class ServletAsignaciones extends HttpServlet
         ServicioAsignacionDocente servicioAsignacion = new ServicioAsignacionDocente();
         ServicioAutorizacion autorizacion = new ServicioAutorizacion();
 
-        String clavePermiso = "Quitar".equals(accion) ? "asignaciones.editar" : "asignaciones.crear";
+        String clavePermiso = "Desactivar".equals(accion) ? "asignaciones.editar" : "asignaciones.crear";
 
         if (!autorizacion.autorizarOResponder403(respuesta, responsable, clavePermiso))
         {
             return;
         }
 
-        if ("Quitar".equals(accion))
+        if ("Desactivar".equals(accion))
         {
-            servicioAsignacion.quitar(Integer.parseInt(solicitud.getParameter("idGrupoMateria")), responsable);
+            servicioAsignacion.desactivar(Integer.parseInt(solicitud.getParameter("idGrupoMateria")), responsable);
         }
         else
         {

@@ -154,7 +154,12 @@ public class DAODocente
 
     public boolean tieneAsignacionesActivas(int idDocente)
     {
-        String sql = "SELECT COUNT(*) FROM docentes_asignaciones WHERE id_docente = ?";
+        String sql = "SELECT COUNT(*) FROM docentes_asignaciones a "
+            + "JOIN grupo_materias gm ON a.id_grupo_materia = gm.id_grupo_materia "
+            + "JOIN grupos g ON gm.id_grupo = g.id_grupo "
+            + "JOIN periodos_escolares p ON g.id_periodo = p.id_periodo "
+            + "WHERE a.id_docente = ? "
+            + "AND g.estatus = 'Activo' AND p.estatus = 'Activo'";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql))

@@ -6,6 +6,7 @@ public class PlanNivel
     private int idPlan;
     private int idNivel;
     private String nombreNivel;
+    private String tituloEgreso;
     private int cuatrimestreInicio;
     private int cuatrimestreFin;
 
@@ -47,6 +48,16 @@ public class PlanNivel
     public void setNombreNivel(String nombreNivel)
     {
         this.nombreNivel = nombreNivel;
+    }
+
+    public String getTituloEgreso()
+    {
+        return tituloEgreso;
+    }
+
+    public void setTituloEgreso(String tituloEgreso)
+    {
+        this.tituloEgreso = tituloEgreso;
     }
 
     public int getCuatrimestreInicio()

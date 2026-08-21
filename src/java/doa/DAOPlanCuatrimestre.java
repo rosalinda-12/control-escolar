@@ -56,10 +56,8 @@ public class DAOPlanCuatrimestre
         return lista;
     }
 
-    /**
-     * Cuatrimestres de todos los planes vigentes, con carrera/plan ya
-     * incluidos en la etiqueta, listos para un selector de "crear grupo".
-     */
+
+
     public ArrayList<PlanCuatrimestre> listarDePlanesVigentes()
     {
         ArrayList<PlanCuatrimestre> lista = new ArrayList<>();

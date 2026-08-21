@@ -9,6 +9,7 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import modelo.Usuario;
 import java.io.IOException;
 
 @WebFilter("/maestro/*")
@@ -21,7 +22,8 @@ public class FiltroMaestro implements Filter
         HttpServletResponse respuestaHttp = (HttpServletResponse) respuesta;
         HttpSession sesion = solicitudHttp.getSession(false);
 
-        Object rol = sesion == null ? null : sesion.getAttribute("rol");
+        Usuario usuario = sesion == null ? null : (Usuario) sesion.getAttribute("usuario");
+        String rol = usuario == null ? null : usuario.getNombreRol();
 
         if (!"Maestro".equals(rol))
         {

@@ -29,6 +29,11 @@ public class ServletSubdirectores extends HttpServlet
         }
 
         cargarDatosFormulario(solicitud);
+        String idEditar = solicitud.getParameter("editar");
+        if (idEditar != null && !idEditar.isEmpty())
+        {
+            solicitud.setAttribute("subdirectorEditar", new ServicioSubdirector().buscarPorId(Integer.parseInt(idEditar)));
+        }
         solicitud.getServletContext().getRequestDispatcher("/admin/subdirectores.jsp").forward(solicitud, respuesta);
     }
 
@@ -60,15 +65,44 @@ public class ServletSubdirectores extends HttpServlet
             return;
         }
 
+        if ("Modificar".equals(accion))
+        {
+            modelo.Subdirector subdirector = new modelo.Subdirector();
+            subdirector.setIdSubdirector(Integer.parseInt(solicitud.getParameter("idSubdirector")));
+            subdirector.setIdPersona(Integer.parseInt(solicitud.getParameter("idPersona")));
+            subdirector.setNombres(solicitud.getParameter("tfNombres"));
+            subdirector.setApellidoPaterno(solicitud.getParameter("tfApellidoPaterno"));
+            subdirector.setApellidoMaterno(solicitud.getParameter("tfApellidoMaterno"));
+            subdirector.setCorreo(solicitud.getParameter("tfCorreo"));
+            java.util.ArrayList<Integer> idsCarrera = obtenerCarreras(solicitud);
+            if (idsCarrera.isEmpty())
+            { solicitud.setAttribute("error", "Selecciona al menos una carrera."); cargarDatosFormulario(solicitud); solicitud.setAttribute("subdirectorEditar", subdirector); solicitud.getServletContext().getRequestDispatcher("/admin/subdirectores.jsp").forward(solicitud, respuesta); return; }
+            subdirector.setIdCarrera(idsCarrera.get(0));
+            subdirector.setIdsCarrera(idsCarrera);
+            ResultadoSimple resultado = servicioSubdirector.actualizar(subdirector, responsable);
+            if (!resultado.isExito())
+            {
+                solicitud.setAttribute("error", resultado.getMensajeError());
+                cargarDatosFormulario(solicitud);
+                solicitud.setAttribute("subdirectorEditar", subdirector);
+                solicitud.getServletContext().getRequestDispatcher("/admin/subdirectores.jsp").forward(solicitud, respuesta);
+                return;
+            }
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SSubdirectores");
+            return;
+        }
+
         Persona persona = new Persona();
         persona.setNombres(solicitud.getParameter("tfNombres"));
         persona.setApellidoPaterno(solicitud.getParameter("tfApellidoPaterno"));
         persona.setApellidoMaterno(solicitud.getParameter("tfApellidoMaterno"));
         persona.setCorreo(solicitud.getParameter("tfCorreo"));
 
-        int idCarrera = Integer.parseInt(solicitud.getParameter("selCarrera"));
+        java.util.ArrayList<Integer> idsCarrera = obtenerCarreras(solicitud);
+        if (idsCarrera.isEmpty())
+        { solicitud.setAttribute("error", "Selecciona al menos una carrera."); cargarDatosFormulario(solicitud); solicitud.getServletContext().getRequestDispatcher("/admin/subdirectores.jsp").forward(solicitud, respuesta); return; }
 
-        ResultadoSimple resultado = servicioSubdirector.agregar(persona, idCarrera, responsable);
+        ResultadoSimple resultado = servicioSubdirector.agregar(persona, idsCarrera, responsable);
 
         if (!resultado.isExito())
         {
@@ -85,5 +119,13 @@ public class ServletSubdirectores extends HttpServlet
     {
         solicitud.setAttribute("subdirectores", new ServicioSubdirector().listar());
         solicitud.setAttribute("carreras", new ServicioCarrera().listarActivas());
+    }
+
+    private java.util.ArrayList<Integer> obtenerCarreras(HttpServletRequest solicitud)
+    {
+        java.util.ArrayList<Integer> ids = new java.util.ArrayList<>();
+        String[] valores = solicitud.getParameterValues("selCarrera");
+        if (valores != null) for (String valor : valores) if (valor != null && !valor.isEmpty()) ids.add(Integer.parseInt(valor));
+        return ids;
     }
 }

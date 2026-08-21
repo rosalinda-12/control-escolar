@@ -1,8 +1,22 @@
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@page import="modelo.Calificacion"%>
 <%@page import="java.util.ArrayList"%>
+<%@page import="java.util.LinkedHashMap"%>
+<%@page import="java.util.LinkedHashSet"%>
+<%@page import="java.util.Map"%>
 <%
     ArrayList<Calificacion> calificaciones = (ArrayList<Calificacion>) request.getAttribute("calificaciones");
+    Map<Integer, Calificacion> alumnosUnicos = new LinkedHashMap<>();
+    Map<Integer, LinkedHashSet<String>> gruposPorAlumno = new LinkedHashMap<>();
+    Map<Integer, LinkedHashSet<String>> periodosPorAlumno = new LinkedHashMap<>();
+    Map<Integer, LinkedHashSet<String>> estadosPorAlumno = new LinkedHashMap<>();
+    for (Calificacion calificacion : calificaciones) {
+        int idAlumno = calificacion.getIdAlumno();
+        alumnosUnicos.putIfAbsent(idAlumno, calificacion);
+        gruposPorAlumno.computeIfAbsent(idAlumno, clave -> new LinkedHashSet<>()).add(calificacion.getNombreGrupo());
+        periodosPorAlumno.computeIfAbsent(idAlumno, clave -> new LinkedHashSet<>()).add(calificacion.getNombrePeriodo());
+        estadosPorAlumno.computeIfAbsent(idAlumno, clave -> new LinkedHashSet<>()).add(calificacion.getEstadoMateria());
+    }
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -25,51 +39,68 @@
 
             <% if (request.getAttribute("error") != null) { %>
             <div class="mensaje-error mt-3"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
-            <% } else if (calificaciones.isEmpty()) { %>
-            <div class="mensaje-exito mt-4">No hay calificaciones registradas todavía.</div>
-            <% } else { %>
+            <% } %>
+            <div class="barra-filtros mt-4" data-filtros-tabla="#tbodyCalificacionesSubdirector">
+                <div class="campo-filtro">
+                    <label for="filtroEstadoCalificacionesSubdirector">Estado</label>
+                    <select id="filtroEstadoCalificacionesSubdirector" class="form-select form-select-sm" data-filtro-campo="estado">
+                        <option value="" selected>Todos</option>
+                        <option value="Cursando">Cursando</option>
+                        <option value="Aprobada">Aprobadas</option>
+                        <option value="Reprobada">Reprobadas</option>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroGrupoCalificacionesSubdirector">Grupo</label>
+                    <select id="filtroGrupoCalificacionesSubdirector" class="form-select form-select-sm" data-filtro-campo="grupo">
+                        <option value="" selected>Todos</option>
+                        <% java.util.LinkedHashSet<String> gruposCalificaciones = new java.util.LinkedHashSet<String>();
+                           for (Calificacion c : calificaciones) { gruposCalificaciones.add(c.getNombreGrupo()); }
+                           for (String grupo : gruposCalificaciones) { %>
+                        <option value="<%= grupo%>"><%= grupo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="campo-filtro">
+                    <label for="filtroPeriodoCalificacionesSubdirector">Periodo</label>
+                    <select id="filtroPeriodoCalificacionesSubdirector" class="form-select form-select-sm" data-filtro-campo="periodo">
+                        <option value="" selected>Todos</option>
+                        <% java.util.LinkedHashSet<String> periodosCalificaciones = new java.util.LinkedHashSet<String>();
+                           for (Calificacion c : calificaciones) { periodosCalificaciones.add(c.getNombrePeriodo()); }
+                           for (String periodo : periodosCalificaciones) { %>
+                        <option value="<%= periodo%>"><%= periodo%></option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoCalificacionesSubdirector">Buscar</label>
+                    <input type="text" id="filtroTextoCalificacionesSubdirector" class="form-control form-control-sm" data-filtro-texto placeholder="Matrícula, alumno, materia...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap mt-4">
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
                             <th>Matrícula</th>
                             <th>Alumno</th>
-                            <th>Materia</th>
-                            <th>Grupo</th>
-                            <th class="text-center">Cuat.</th>
-                            <th class="text-center">P1</th>
-                            <th class="text-center">P2</th>
-                            <th class="text-center">P3</th>
-                            <th class="text-center">Promedio</th>
-                            <th class="text-center">Estado</th>
+                            <th></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <% for (Calificacion calificacion : calificaciones) { %>
-                        <tr>
+                    <tbody id="tbodyCalificacionesSubdirector">
+                        <% for (Map.Entry<Integer, Calificacion> entrada : alumnosUnicos.entrySet()) { Calificacion calificacion = entrada.getValue(); int idAlumno = entrada.getKey(); %>
+                        <tr data-fila-filtrable data-estado="<%= String.join("|", estadosPorAlumno.get(idAlumno))%>" data-grupo="<%= String.join("|", gruposPorAlumno.get(idAlumno))%>" data-periodo="<%= String.join("|", periodosPorAlumno.get(idAlumno))%>">
                             <td><%= calificacion.getMatricula()%></td>
                             <td><%= calificacion.getNombreAlumno()%></td>
-                            <td><%= calificacion.getNombreMateria()%></td>
-                            <td><%= calificacion.getNombreGrupo()%></td>
-                            <td class="text-center"><%= calificacion.getNumeroCuatrimestre()%></td>
-                            <td class="text-center"><%= calificacion.getParcial1() == null ? "—" : calificacion.getParcial1()%></td>
-                            <td class="text-center"><%= calificacion.getParcial2() == null ? "—" : calificacion.getParcial2()%></td>
-                            <td class="text-center"><%= calificacion.getParcial3() == null ? "—" : calificacion.getParcial3()%></td>
-                            <td class="text-center fw-semibold"><%= calificacion.getPromedioFinal() == null ? "—" : calificacion.getPromedioFinal()%></td>
-                            <td class="text-center">
-                                <% if ("Aprobada".equals(calificacion.getEstadoMateria())) { %>
-                                <span class="badge text-bg-success">Aprobada</span>
-                                <% } else if ("Reprobada".equals(calificacion.getEstadoMateria())) { %>
-                                <span class="badge text-bg-danger">Reprobada</span>
-                                <% } else { %>
-                                <span class="badge text-bg-secondary">Cursando</span>
-                                <% } %>
-                            </td>
+                            <td class="text-end"><a class="btn btn-sm btn-icon-formal" href="STrayectoria?idAlumno=<%= idAlumno%>" title="Ver trayectoria" aria-label="Ver trayectoria"><i class="bi bi-signpost-split"></i></a></td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ninguna calificación coincide con los filtros seleccionados.</div>
             </div>
+            <% if (calificaciones.isEmpty()) { %>
+            <div class="mensaje-exito mt-4">No hay calificaciones registradas todavía para esta carrera.</div>
             <% } %>
         </div>
 

@@ -24,9 +24,9 @@
                     <h2>Carreras</h2>
                     <p class="texto-info mb-0">Da de alta cada carrera que ofrece la institución. Es el primer paso antes de crear un plan de estudios.</p>
                 </div>
-                <button class="btn btn-primary-formal" data-bs-toggle="modal" data-bs-target="#modalCarrera">
+                <a href="SCarreras?nuevo=1" class="btn btn-primary-formal">
                     <i class="bi bi-plus-lg me-1"></i>Nueva carrera
-                </button>
+                </a>
             </div>
 
             <% if (request.getAttribute("error") != null) { %>
@@ -43,21 +43,44 @@
                 crear después sus planes de estudio.
             </div>
             <% } else { %>
+            <div class="barra-filtros" data-filtros-tabla="#tbodyCarreras">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusCarreras">Estatus</label>
+                    <select id="filtroEstatusCarreras" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="Activa" selected>Activas (actuales)</option>
+                        <option value="">Todas</option>
+                        <option value="Inactiva">Inactivas</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoCarreras">Buscar</label>
+                    <input type="text" id="filtroTextoCarreras" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre o clave...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap">
                 <table class="table table-formal align-middle">
                     <thead>
                         <tr>
                             <th>Clave</th>
                             <th>Nombre</th>
+                            <th>Nivel(es)</th>
                             <th>Estatus</th>
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyCarreras">
                         <% for (Carrera carrera : carreras) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= carrera.getEstatus()%>">
                             <td><span class="badge text-bg-secondary"><%= carrera.getClaveCarrera()%></span></td>
                             <td><%= carrera.getNombreCarrera()%></td>
+                            <td>
+                                <% if (carrera.getNivelesTexto() != null && !carrera.getNivelesTexto().isBlank()) { %>
+                                <%= carrera.getNivelesTexto()%>
+                                <% } else { %>
+                                <span class="texto-info">Sin plan vigente</span>
+                                <% } %>
+                            </td>
                             <td>
                                 <% if ("Activa".equals(carrera.getEstatus())) { %>
                                 <span class="badge text-bg-success">Activa</span>
@@ -66,18 +89,19 @@
                                 <% } %>
                             </td>
                             <td class="text-end">
-                                <a href="SCarreras?editar=<%= carrera.getIdCarrera()%>" class="btn btn-sm btn-outline-formal">Editar</a>
+                                <a href="SCarreras?editar=<%= carrera.getIdCarrera()%>" class="btn btn-sm btn-icon-formal" title="Editar carrera" aria-label="Editar carrera"><i class="bi bi-pencil-square"></i></a>
                                 <form method="post" action="SCarreras" class="d-inline"
                                       onsubmit="return confirm('¿Eliminar esta carrera? Si ya tiene planes de estudio registrados, en su lugar se desactivará.');">
                                     <input type="hidden" name="accion" value="Eliminar">
                                     <input type="hidden" name="idCarrera" value="<%= carrera.getIdCarrera()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar carrera" aria-label="Eliminar carrera"><i class="bi bi-trash3"></i></button>
                                 </form>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
             </div>
             <% } %>
         </div>
@@ -127,7 +151,7 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="../estilo/app.js"></script>
-        <% if (carreraEditar != null) { %>
+        <% if (carreraEditar != null || "1".equals(request.getParameter("nuevo"))) { %>
         <script>
             new bootstrap.Modal(document.getElementById("modalCarrera")).show();
         </script>

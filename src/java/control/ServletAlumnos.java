@@ -20,6 +20,8 @@ public class ServletAlumnos extends HttpServlet
     protected void doGet(HttpServletRequest solicitud, HttpServletResponse respuesta) throws ServletException, IOException
     {
         ServicioAlumno servicioAlumno = new ServicioAlumno();
+        String idEditar = solicitud.getParameter("editar");
+        solicitud.setAttribute("alumnoEditar", idEditar == null || idEditar.isEmpty() ? null : servicioAlumno.buscarPorId(Integer.parseInt(idEditar)));
         solicitud.setAttribute("alumnos", servicioAlumno.listar());
         solicitud.setAttribute("planes", new ServicioPlanEstudio().listarVigentes());
         solicitud.getServletContext().getRequestDispatcher("/admin/alumnos.jsp").forward(solicitud, respuesta);
@@ -33,10 +35,51 @@ public class ServletAlumnos extends HttpServlet
         String accion = solicitud.getParameter("accion");
         ServicioAlumno servicioAlumno = new ServicioAlumno();
 
-        if ("Baja".equals(accion))
+        if ("BajaTemporal".equals(accion))
         {
-            servicioAlumno.actualizarEstatus(Integer.parseInt(solicitud.getParameter("idAlumno")), "Baja", responsable);
+            servicioAlumno.bajaTemporal(Integer.parseInt(solicitud.getParameter("idAlumno")), responsable);
             respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SAlumnos");
+            return;
+        }
+
+        if ("BajaDefinitiva".equals(accion))
+        {
+            servicioAlumno.bajaDefinitiva(Integer.parseInt(solicitud.getParameter("idAlumno")), responsable);
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SAlumnos");
+            return;
+        }
+
+        if ("Reactivar".equals(accion))
+        {
+            servicioAlumno.reactivar(Integer.parseInt(solicitud.getParameter("idAlumno")), responsable);
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SAlumnos");
+            return;
+        }
+
+        if ("RevertirBaja".equals(accion))
+        {
+            servicioAlumno.revertirBajaDefinitiva(Integer.parseInt(solicitud.getParameter("idAlumno")), responsable);
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SAlumnos");
+            return;
+        }
+
+        if ("Modificar".equals(accion))
+        {
+            modelo.Alumno alumno = new modelo.Alumno();
+            alumno.setIdAlumno(Integer.parseInt(solicitud.getParameter("idAlumno")));
+            alumno.setIdPersona(Integer.parseInt(solicitud.getParameter("idPersona")));
+            alumno.setNombres(solicitud.getParameter("tfNombres"));
+            alumno.setApellidoPaterno(solicitud.getParameter("tfApellidoPaterno"));
+            alumno.setApellidoMaterno(solicitud.getParameter("tfApellidoMaterno"));
+            alumno.setCorreo(solicitud.getParameter("tfCorreo"));
+            ResultadoSimple resultado = servicioAlumno.actualizar(alumno, responsable);
+            if (!resultado.isExito()) solicitud.setAttribute("error", resultado.getMensajeError());
+            else
+            { respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SAlumnos"); return; }
+            solicitud.setAttribute("alumnos", servicioAlumno.listar());
+            solicitud.setAttribute("planes", new ServicioPlanEstudio().listarVigentes());
+            solicitud.setAttribute("alumnoEditar", alumno);
+            solicitud.getServletContext().getRequestDispatcher("/admin/alumnos.jsp").forward(solicitud, respuesta);
             return;
         }
 

@@ -10,18 +10,16 @@ import java.util.ArrayList;
 
 public class DAODocenteAsignacion
 {
-    /**
-     * Materias de grupo que tiene a cargo el docente, con el contexto
-     * (grupo, carrera, periodo) y el parcial activo de ese periodo, para
-     * el panel del maestro.
-     */
+
+
     public ArrayList<DocenteAsignacion> listarPorDocente(int idDocente)
     {
         ArrayList<DocenteAsignacion> lista = new ArrayList<>();
         String sql = "SELECT a.id_asignacion, a.id_docente, a.id_grupo_materia, "
                 + "gm.id_grupo, m.nombre_materia, g.nombre_grupo, c.nombre_carrera, "
-                + "g.id_periodo, pr.nombre_periodo, g.estatus AS estatus_grupo, cp.parcial_activo "
+                + "g.id_periodo, pr.nombre_periodo, g.estatus AS estatus_grupo, pr.estatus AS estatus_periodo, cp.parcial_activo "
                 + "FROM docentes_asignaciones a "
+                + "JOIN docentes d ON a.id_docente = d.id_docente AND d.estatus = 'Activo' "
                 + "JOIN grupo_materias gm ON a.id_grupo_materia = gm.id_grupo_materia "
                 + "JOIN materias m ON gm.id_materia = m.id_materia "
                 + "JOIN grupos g ON gm.id_grupo = g.id_grupo "
@@ -53,6 +51,7 @@ public class DAODocenteAsignacion
                     asignacion.setIdPeriodo(resultado.getInt("id_periodo"));
                     asignacion.setNombrePeriodo(resultado.getString("nombre_periodo"));
                     asignacion.setEstatusGrupo(resultado.getString("estatus_grupo"));
+                    asignacion.setEstatusPeriodo(resultado.getString("estatus_periodo"));
 
                     int parcialActivo = resultado.getInt("parcial_activo");
                     asignacion.setParcialActivo(resultado.wasNull() ? null : parcialActivo);
@@ -69,11 +68,8 @@ public class DAODocenteAsignacion
         return lista;
     }
 
-    /**
-     * Verifica que la materia de grupo en verdad esté a cargo de ese
-     * docente, para que un maestro no pueda capturar calificaciones de un
-     * grupo ajeno manipulando el parámetro en la URL.
-     */
+
+
     public boolean perteneceADocente(int idGrupoMateria, int idDocente)
     {
         String sql = "SELECT COUNT(*) FROM docentes_asignaciones WHERE id_grupo_materia = ? AND id_docente = ?";
@@ -100,15 +96,12 @@ public class DAODocenteAsignacion
         return false;
     }
 
-    /**
-     * Contexto (materia, grupo, carrera, periodo, parcial activo) de una
-     * materia de grupo específica, para encabezar la pantalla de captura de
-     * calificaciones. No exige que exista una asignación de docente.
-     */
+
+
     public DocenteAsignacion buscarInfoGrupoMateria(int idGrupoMateria)
     {
         String sql = "SELECT gm.id_grupo_materia, gm.id_grupo, m.nombre_materia, g.nombre_grupo, c.nombre_carrera, "
-                + "g.id_periodo, pr.nombre_periodo, g.estatus AS estatus_grupo, cp.parcial_activo "
+                + "g.id_periodo, pr.nombre_periodo, g.estatus AS estatus_grupo, pr.estatus AS estatus_periodo, cp.parcial_activo "
                 + "FROM grupo_materias gm "
                 + "JOIN materias m ON gm.id_materia = m.id_materia "
                 + "JOIN grupos g ON gm.id_grupo = g.id_grupo "
@@ -137,6 +130,7 @@ public class DAODocenteAsignacion
                     asignacion.setIdPeriodo(resultado.getInt("id_periodo"));
                     asignacion.setNombrePeriodo(resultado.getString("nombre_periodo"));
                     asignacion.setEstatusGrupo(resultado.getString("estatus_grupo"));
+                    asignacion.setEstatusPeriodo(resultado.getString("estatus_periodo"));
 
                     int parcialActivo = resultado.getInt("parcial_activo");
                     asignacion.setParcialActivo(resultado.wasNull() ? null : parcialActivo);
@@ -155,7 +149,9 @@ public class DAODocenteAsignacion
 
     public boolean existeParaGrupoMateria(int idGrupoMateria)
     {
-        String sql = "SELECT COUNT(*) FROM docentes_asignaciones WHERE id_grupo_materia = ?";
+        String sql = "SELECT COUNT(*) FROM docentes_asignaciones a "
+            + "JOIN docentes d ON a.id_docente = d.id_docente "
+            + "WHERE a.id_grupo_materia = ? AND d.estatus = 'Activo'";
 
         try (Connection conexion = ConexionMySQL.obtenerConexion();
              PreparedStatement sentencia = conexion.prepareStatement(sql))
@@ -195,7 +191,7 @@ public class DAODocenteAsignacion
         }
     }
 
-    public void quitarPorGrupoMateria(int idGrupoMateria)
+    public void desactivarPorGrupoMateria(int idGrupoMateria)
     {
         String sql = "DELETE FROM docentes_asignaciones WHERE id_grupo_materia = ?";
 

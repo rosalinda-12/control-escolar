@@ -2,19 +2,28 @@ package modelo;
 
 import java.util.ArrayList;
 
-/**
- * Agrupa las materias (y sus calificaciones) que un alumno cursó en un
- * mismo cuatrimestre de su plan de estudio, junto con el promedio final
- * de ese cuatrimestre, para la boleta que ve el propio alumno.
- */
+
+
 public class BoletaCuatrimestre
 {
+    private int idTrayectoria;
     private int numeroCuatrimestre;
     private String nombrePeriodo;
     private String nombreGrupo;
+    private String nombreNivel;
     private ArrayList<Calificacion> materias = new ArrayList<>();
     private Double promedioCuatrimestre;
     private int materiasConPromedio;
+
+    public int getIdTrayectoria()
+    {
+        return idTrayectoria;
+    }
+
+    public void setIdTrayectoria(int idTrayectoria)
+    {
+        this.idTrayectoria = idTrayectoria;
+    }
 
     public int getNumeroCuatrimestre()
     {
@@ -44,6 +53,16 @@ public class BoletaCuatrimestre
     public void setNombreGrupo(String nombreGrupo)
     {
         this.nombreGrupo = nombreGrupo;
+    }
+
+    public String getNombreNivel()
+    {
+        return nombreNivel;
+    }
+
+    public void setNombreNivel(String nombreNivel)
+    {
+        this.nombreNivel = nombreNivel;
     }
 
     public ArrayList<Calificacion> getMaterias()
@@ -76,11 +95,8 @@ public class BoletaCuatrimestre
         this.materiasConPromedio = materiasConPromedio;
     }
 
-    /**
-     * True si todavía falta el promedio final de alguna materia de este
-     * cuatrimestre (parciales incompletos), para poder avisar en la vista
-     * que el promedio del cuatrimestre es preliminar.
-     */
+
+
     public boolean isCompleto()
     {
         return materiasConPromedio == materias.size();

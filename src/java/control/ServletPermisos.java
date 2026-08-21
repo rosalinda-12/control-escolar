@@ -13,13 +13,6 @@ import servicio.ServicioPermiso;
 import servicio.ServicioRol;
 import java.io.IOException;
 
-/**
- * Matriz rol x permiso. Solo el Administrador (permisos.gestionar) puede
- * entrar aquí; ni siquiera Control Escolar tiene este permiso activo por
- * default (ver migración SQL), así que si alguien manipula la URL para
- * llegar a /admin/SPermisos sin el permiso, recibe 403 igual que en
- * cualquier otro módulo.
- */
 @WebServlet("/admin/SPermisos")
 public class ServletPermisos extends HttpServlet
 {

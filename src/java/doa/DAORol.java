@@ -111,11 +111,6 @@ public class DAORol
         return false;
     }
 
-    /**
-     * Da de alta un rol nuevo (siempre con es_administrador_principal =
-     * 0; ese indicador solo lo tiene el Administrador original y no se
-     * otorga por esta pantalla).
-     */
     public int agregar(Rol rol)
     {
         String sql = "INSERT INTO roles (nombre_rol, descripcion, es_administrador_principal) VALUES (?, ?, 0)";

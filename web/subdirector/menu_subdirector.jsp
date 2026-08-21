@@ -31,7 +31,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <a class="sidebar-link" href="<%= rutaBase %>/SLogout"><i class="bi bi-box-arrow-right"></i>Cerrar sesión</a>
+            <a class="sidebar-link" href="<%= rutaBase %>/SLogout"><i class="bi bi-box-arrow-right"></i>Cerrar sesi&oacute;n</a>
         </div>
     </aside>
 
@@ -60,9 +60,9 @@
                         <i class="bi bi-chevron-down topbar-user-caret"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li class="px-3 py-1 texto-info">Sesión iniciada como<br><strong><%= usuarioSesion.getCorreo()%></strong></li>
+                        <li class="px-3 py-1 texto-info">Sesi&oacute;n iniciada como<br><strong><%= usuarioSesion.getCorreo()%></strong></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="<%= rutaBase %>/SLogout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                        <li><a class="dropdown-item" href="<%= rutaBase %>/SLogout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesi&oacute;n</a></li>
                     </ul>
                 </div>
             </div>

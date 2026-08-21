@@ -25,6 +25,11 @@ public class ServletPlanesEstudio extends HttpServlet
         solicitud.setAttribute("planes", servicioPlan.listar());
         solicitud.setAttribute("carreras", new ServicioCarrera().listarActivas());
         solicitud.setAttribute("niveles", new ServicioNivelAcademico().listar());
+        String idEditar = solicitud.getParameter("editar");
+        if (idEditar != null && !idEditar.isEmpty())
+        {
+            solicitud.setAttribute("planEditar", servicioPlan.buscarPorId(Integer.parseInt(idEditar)));
+        }
         solicitud.getServletContext().getRequestDispatcher("/admin/planes.jsp").forward(solicitud, respuesta);
     }
 
@@ -43,6 +48,30 @@ public class ServletPlanesEstudio extends HttpServlet
             return;
         }
 
+        if ("Modificar".equals(accion))
+        {
+            PlanEstudio plan = new PlanEstudio();
+            plan.setIdPlan(Integer.parseInt(solicitud.getParameter("idPlan")));
+            plan.setIdCarrera(Integer.parseInt(solicitud.getParameter("selCarrera")));
+            plan.setVersion(solicitud.getParameter("tfVersion"));
+            plan.setNombrePlan(solicitud.getParameter("tfNombrePlan"));
+            plan.setDuracionCuatrimestres(Integer.parseInt(solicitud.getParameter("tfDuracion")));
+            plan.setFechaVigenciaInicio(LocalDate.parse(solicitud.getParameter("tfFechaVigencia")));
+            ResultadoSimple resultado = servicioPlan.actualizar(plan, responsable);
+            if (!resultado.isExito())
+            {
+                solicitud.setAttribute("error", resultado.getMensajeError());
+                solicitud.setAttribute("planEditar", plan);
+                solicitud.setAttribute("planes", servicioPlan.listar());
+                solicitud.setAttribute("carreras", new ServicioCarrera().listarActivas());
+                solicitud.setAttribute("niveles", new ServicioNivelAcademico().listar());
+                solicitud.getServletContext().getRequestDispatcher("/admin/planes.jsp").forward(solicitud, respuesta);
+                return;
+            }
+            respuesta.sendRedirect(solicitud.getContextPath() + "/admin/SPlanes");
+            return;
+        }
+
         PlanEstudio plan = new PlanEstudio();
         plan.setIdCarrera(Integer.parseInt(solicitud.getParameter("selCarrera")));
         plan.setVersion(solicitud.getParameter("tfVersion"));
@@ -51,6 +80,7 @@ public class ServletPlanesEstudio extends HttpServlet
         plan.setFechaVigenciaInicio(LocalDate.parse(solicitud.getParameter("tfFechaVigencia")));
 
         String[] nivelesTexto = solicitud.getParameterValues("selNivel[]");
+        String[] titulosEgreso = solicitud.getParameterValues("tfTitulo[]");
         String[] iniciosTexto = solicitud.getParameterValues("tfInicio[]");
         String[] finesTexto = solicitud.getParameterValues("tfFin[]");
 
@@ -72,7 +102,7 @@ public class ServletPlanesEstudio extends HttpServlet
             }
         }
 
-        ResultadoSimple resultado = servicioPlan.agregar(plan, idsNivel, inicios, fines, responsable);
+        ResultadoSimple resultado = servicioPlan.agregar(plan, idsNivel, titulosEgreso, inicios, fines, responsable);
 
         if (!resultado.isExito())
         {

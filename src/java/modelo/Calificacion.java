@@ -9,24 +9,22 @@ public class Calificacion
     private Double parcial3;
     private Double promedioFinal;
 
-    // Campos de solo lectura (vienen del JOIN) para mostrar la lista de
-    // alumnos a capturar sin tener que hacer consultas aparte.
+
     private String matricula;
     private String nombreAlumno;
+    private int idAlumno;
     private String estadoMateria;
     private int intento;
 
-    // Campos de solo lectura adicionales (vienen del JOIN) para la boleta
-    // de calificaciones que ve el propio alumno, agrupada por cuatrimestre.
+
     private String nombreMateria;
     private int numeroCuatrimestre;
     private String nombrePeriodo;
     private String nombreGrupo;
+    private int idTrayectoria;
+    private String nombreNivel;
 
-    // Campos de solo lectura adicionales (vienen del JOIN) para la pantalla
-    // de calificaciones de Administrador/Control Escolar/Subdirector, que
-    // muestra todas las carreras (o solo la propia, en el caso del
-    // Subdirector) en lugar de un solo grupo-materia.
+
     private int idCarrera;
     private String nombreCarrera;
 
@@ -110,6 +108,16 @@ public class Calificacion
         this.nombreAlumno = nombreAlumno;
     }
 
+    public int getIdAlumno()
+    {
+        return idAlumno;
+    }
+
+    public void setIdAlumno(int idAlumno)
+    {
+        this.idAlumno = idAlumno;
+    }
+
     public String getEstadoMateria()
     {
         return estadoMateria;
@@ -170,6 +178,26 @@ public class Calificacion
         this.nombreGrupo = nombreGrupo;
     }
 
+    public int getIdTrayectoria()
+    {
+        return idTrayectoria;
+    }
+
+    public void setIdTrayectoria(int idTrayectoria)
+    {
+        this.idTrayectoria = idTrayectoria;
+    }
+
+    public String getNombreNivel()
+    {
+        return nombreNivel;
+    }
+
+    public void setNombreNivel(String nombreNivel)
+    {
+        this.nombreNivel = nombreNivel;
+    }
+
     public int getIdCarrera()
     {
         return idCarrera;
@@ -190,10 +218,8 @@ public class Calificacion
         this.nombreCarrera = nombreCarrera;
     }
 
-    /**
-     * Devuelve el valor capturado del parcial indicado (1, 2 o 3), o null si
-     * ese número no es válido o aún no se ha capturado.
-     */
+
+
     public Double getParcial(int numero)
     {
         switch (numero)

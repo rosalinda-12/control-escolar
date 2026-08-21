@@ -23,15 +23,16 @@
         <%@ include file="menu_admin.jspf" %>
 
         <div class="container">
-            <div class="mt-4">
-                <h2>Usuarios</h2>
+                    <div class="usuarios-heading mt-4">
+                        <div><h2>Usuarios</h2>
                 <p class="texto-info mb-0">
-                    Cuentas del sistema y su rol. Aquí no se crean cuentas nuevas: cada persona
-                    (Alumno, Maestro o Subdirector) se autoregistra por su cuenta en la pantalla de
+                    Cuentas del sistema y su rol. Desde aquí puedes agregar cuentas de Control Escolar o Subdirector.
+                    Las cuentas de Alumno y Maestro se registran por su cuenta en la pantalla de
                     registro, usando el mismo correo con el que fue dada de alta en
                     Alumnos / Docentes / Subdirectores. Una vez que verifica su correo, aparece en
                     <a href="SSolicitudesRegistro">Solicitudes</a> para que la apruebes y pueda iniciar sesión.
-                </p>
+                </p></div>
+                <button type="button" class="btn btn-primary-formal" data-bs-toggle="modal" data-bs-target="#modalAgregarUsuario"><i class="bi bi-person-plus"></i>Agregar usuario</button>
             </div>
 
             <% if (request.getAttribute("error") != null) { %>
@@ -41,6 +42,21 @@
             <div class="mensaje-exito"><i class="bi bi-check-circle me-1"></i><%= request.getAttribute("exito")%></div>
             <% } %>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyUsuarios">
+                <div class="campo-filtro">
+                    <label for="filtroEstatusUsuarios">Estatus</label>
+                    <select id="filtroEstatusUsuarios" class="form-select form-select-sm" data-filtro-campo="estatus">
+                        <option value="Activo" selected>Activos (actuales)</option>
+                        <option value="">Todos</option>
+                        <option value="Inactivo">Inactivos</option>
+                    </select>
+                </div>
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoUsuarios">Buscar</label>
+                    <input type="text" id="filtroTextoUsuarios" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre o correo...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap mt-3">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -53,9 +69,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyUsuarios">
                         <% for (Usuario u : usuarios) { %>
-                        <tr>
+                        <tr data-fila-filtrable data-estatus="<%= "Inactivo".equals(u.getEstatusRegistro()) ? "Inactivo" : "Activo"%>">
                             <td><%= u.getNombres()%> <%= u.getApellidoPaterno()%></td>
                             <td><%= u.getCorreo()%></td>
                             <td>
@@ -101,7 +117,7 @@
                                       onsubmit="return confirm('¿Eliminar/desactivar esta cuenta?');">
                                     <input type="hidden" name="accion" value="Eliminar">
                                     <input type="hidden" name="idUsuario" value="<%= u.getIdUsuario()%>">
-                                    <button type="submit" class="btn btn-sm btn-danger-formal">Eliminar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger-formal btn-icon-formal" title="Eliminar usuario" aria-label="Eliminar usuario"><i class="bi bi-trash3"></i></button>
                                 </form>
                                 <% } %>
                             </td>
@@ -109,6 +125,31 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con los filtros seleccionados.</div>
+            </div>
+        </div>
+
+        <div class="modal fade modal-formal" id="modalAgregarUsuario" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post" action="SUsuarios">
+                        <div class="modal-header"><h5 class="modal-title">Agregar usuario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body">
+                            <input type="hidden" name="accion" value="Agregar">
+                            <div class="row g-3">
+                                <div class="col-md-6"><label for="tfNombresNuevo" class="form-label">Nombres</label><input id="tfNombresNuevo" name="tfNombresNuevo" class="form-control" required></div>
+                                <div class="col-md-6"><label for="tfApellidoPaternoNuevo" class="form-label">Apellido paterno</label><input id="tfApellidoPaternoNuevo" name="tfApellidoPaternoNuevo" class="form-control" required></div>
+                                <div class="col-md-6"><label for="tfApellidoMaternoNuevo" class="form-label">Apellido materno</label><input id="tfApellidoMaternoNuevo" name="tfApellidoMaternoNuevo" class="form-control"></div>
+                                <div class="col-md-6"><label for="tfCorreoNuevo" class="form-label">Correo</label><input id="tfCorreoNuevo" type="email" name="tfCorreoNuevo" class="form-control" required></div>
+                                <div class="col-md-6"><label for="tfContrasenaNuevo" class="form-label">Contraseña inicial</label><input id="tfContrasenaNuevo" type="password" name="tfContrasenaNuevo" minlength="8" class="form-control" required></div>
+                                <div class="col-md-6"><label for="selRolNuevo" class="form-label">Rol</label><select id="selRolNuevo" name="selRolNuevo" class="form-select" onchange="alternarCarreraNueva(this)" required><% for (Rol r : roles) { if ("Control Escolar".equals(r.getNombreRol()) || "Subdirector".equals(r.getNombreRol())) { %><option value="<%= r.getIdRol()%>" data-subdirector="<%= "Subdirector".equals(r.getNombreRol())%>"><%= r.getNombreRol()%></option><% } } %></select></div>
+                                <div class="col-12" id="carreraNuevaWrap"><label for="selCarreraNuevo" class="form-label">Carrera del subdirector</label><select id="selCarreraNuevo" name="selCarreraNuevo" class="form-select"><option value="">Selecciona una carrera</option><% for (Carrera c : carreras) { %><option value="<%= c.getIdCarrera()%>"><%= c.getNombreCarrera()%></option><% } %></select></div>
+                            </div>
+                            <div class="form-text mt-3">La cuenta quedará aprobada y deberá cambiar su contraseña al iniciar sesión.</div>
+                        </div>
+                        <div class="modal-footer"><button type="submit" class="btn btn-primary-formal"><i class="bi bi-person-plus"></i>Agregar cuenta</button></div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -123,6 +164,18 @@
                     contenedor.style.display = esSubdirector ? "" : "none";
                 }
             }
+            function alternarCarreraNueva(select) {
+                var opcion = select.options[select.selectedIndex];
+                var carrera = document.getElementById("carreraNuevaWrap");
+                var selector = document.getElementById("selCarreraNuevo");
+                var esSubdirector = opcion.getAttribute("data-subdirector") === "true";
+                carrera.style.display = esSubdirector ? "" : "none";
+                selector.required = esSubdirector;
+            }
+            alternarCarreraNueva(document.getElementById("selRolNuevo"));
+            <% if (request.getAttribute("abrirAgregar") != null) { %>
+            new bootstrap.Modal(document.getElementById("modalAgregarUsuario")).show();
+            <% } %>
         </script>
             </main>
     </div>

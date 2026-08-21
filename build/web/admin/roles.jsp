@@ -32,6 +32,13 @@
             <div class="mensaje-error"><i class="bi bi-exclamation-triangle me-1"></i><%= request.getAttribute("error")%></div>
             <% } %>
 
+            <div class="barra-filtros" data-filtros-tabla="#tbodyRoles">
+                <div class="campo-filtro campo-filtro-texto">
+                    <label for="filtroTextoRoles">Buscar</label>
+                    <input type="text" id="filtroTextoRoles" class="form-control form-control-sm" data-filtro-texto placeholder="Nombre o descripción...">
+                </div>
+                <span class="filtro-contador" data-filtro-contador></span>
+            </div>
             <div class="tabla-formal-wrap mt-3">
                 <table class="table table-formal align-middle">
                     <thead>
@@ -42,9 +49,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyRoles">
                         <% for (Rol r : roles) { %>
-                        <tr>
+                        <tr data-fila-filtrable>
                             <td><%= r.getNombreRol()%></td>
                             <td><%= r.getDescripcion() != null ? r.getDescripcion() : ""%></td>
                             <td>
@@ -63,6 +70,7 @@
                         <% } %>
                     </tbody>
                 </table>
+                <div class="mensaje-exito mt-3" data-filtro-vacio style="display:none;">Ningún registro coincide con la búsqueda.</div>
             </div>
         </div>
 

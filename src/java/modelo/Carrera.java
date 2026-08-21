@@ -6,6 +6,7 @@ public class Carrera
     private String nombreCarrera;
     private String claveCarrera;
     private String estatus;
+    private String nivelesTexto;
 
     public int getIdCarrera()
     {
@@ -45,5 +46,17 @@ public class Carrera
     public void setEstatus(String estatus)
     {
         this.estatus = estatus;
+    }
+
+
+
+    public String getNivelesTexto()
+    {
+        return nivelesTexto;
+    }
+
+    public void setNivelesTexto(String nivelesTexto)
+    {
+        this.nivelesTexto = nivelesTexto;
     }
 }

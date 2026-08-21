@@ -125,6 +125,23 @@ public class DAONivelAcademico
         }
     }
 
+    public void actualizar(NivelAcademico nivel)
+    {
+        String sql = "UPDATE niveles_academicos SET nombre_nivel = ? WHERE id_nivel = ?";
+
+        try (Connection conexion = ConexionMySQL.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql))
+        {
+            sentencia.setString(1, nivel.getNombreNivel());
+            sentencia.setInt(2, nivel.getIdNivel());
+            sentencia.executeUpdate();
+        }
+        catch (SQLException excepcion)
+        {
+            throw new RuntimeException(excepcion);
+        }
+    }
+
     private NivelAcademico construirNivel(ResultSet resultado) throws SQLException
     {
         NivelAcademico nivel = new NivelAcademico();
